@@ -1,6 +1,8 @@
 import os
 
+import loguru
 from dotenv import load_dotenv
+from loguru import logger
 
 """
 
@@ -19,6 +21,7 @@ else:
 def get_var(name: str) -> str:
     value = os.getenv(name)
     assert value is not None, f"{name} is not set"
+    logger.info(f"Loaded environment variable {name}")
     return value
 
 

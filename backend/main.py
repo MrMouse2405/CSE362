@@ -6,20 +6,42 @@ CSE362 Lab Project
 
 import os
 
-from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from loguru import logger
+from sqlmodel import select
 
 from api import api_router
-from auth.password import hash_password, verify_password
-from models.users import User
+from auth.password import hash_password
+from config import ROOT_USER_NAME, ROOT_USER_PASSWORD
+from models import make_db_session
+from models.users import Role, User
 
 """
 
     Register Root User
 
 """
+
+
+def register_root_user():
+    with make_db_session() as session:
+        user: User | None = session.exec(
+            select(User).where(User.username == ROOT_USER_NAME)
+        ).first()
+        if not user:
+            root_user = User(
+                username=ROOT_USER_NAME,
+                password_hash=hash_password(ROOT_USER_PASSWORD),
+                role=Role.ROOT,
+            )
+            session.add(root_user)
+            session.commit()
+
+
+register_root_user()
+logger.info("Root user registered")
 
 """
 

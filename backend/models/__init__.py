@@ -1,9 +1,12 @@
+from loguru import logger
 from sqlmodel import Session, SQLModel, create_engine
 
 import models.users as users
+from config import DATABASE_URL
 
-engine = create_engine("sqlite:///database.db")
+engine = create_engine(DATABASE_URL)
 SQLModel.metadata.create_all(engine)
+logger.info("Database initialized")
 
 
 def make_db_session() -> Session:

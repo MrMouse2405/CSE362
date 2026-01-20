@@ -2,15 +2,12 @@ import hashlib
 import secrets
 from datetime import datetime, timedelta, timezone
 
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import Cookie, Depends, HTTPException, status
 
 from auth.utils import generateSecureRandomString
 from models import make_db_session
 from models.users import Role, Session, SessionWithToken, User
 
-# Setup OAuth2 (Standard FastAPI Auth)
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 session_expires_in_seconds = 60 * 60 * 24  # 1 day
 
 """
@@ -74,8 +71,11 @@ async def validate_session_token(token: str) -> Session:
         if not session:
             raise invalid_session_exception
 
+        # Make the naive datetime object from the DB aware of its UTC timezone
+        created_at_aware = session.created_at.replace(tzinfo=timezone.utc)
+
         # Check for expiration
-        expiration_time = session.created_at + timedelta(
+        expiration_time = created_at_aware + timedelta(
             seconds=session_expires_in_seconds
         )
         if datetime.now(timezone.utc) > expiration_time:
@@ -103,13 +103,20 @@ async def delete_session(session_id: str):
         sql_session.commit()
 
 
-def get_current_user(token: str = Depends(oauth2_scheme)):
-    # ... Decode JWT token here ...
-    # ... Fetch user from DB using the ID in the token ...
-    # user = session.get(User, user_id)
+async def get_current_user(
+    session_token: str | None = Cookie(default=None),
+) -> User:
+    if session_token is None:
+        raise invalid_session_exception
 
-    # MOCK USER for example:
-    pass
+    session = await validate_session_token(session_token)
+
+    with make_db_session() as sql_session:
+        user = sql_session.get(User, session.user_id)
+        if not user:
+            # This case should ideally not happen if session exists for a user
+            raise invalid_session_exception
+        return user
 
 
 class RoleChecker:
