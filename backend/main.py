@@ -6,13 +6,33 @@ CSE362 Lab Project
 
 import os
 
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from api import api_router
+from auth.password import hash_password, verify_password
+from models.users import User
 
-app = FastAPI()
+"""
+
+    Register Root User
+
+"""
+
+"""
+
+FastAPI
+
+"""
+
+
+app = FastAPI(
+    title="CSE362 Lab Project",
+    version="0.1.0",
+    description="API for the CSE362 lab project.",
+)
 
 """
 
@@ -21,7 +41,6 @@ app = FastAPI()
     Only for development.
 
 """
-# Add this middleware block immediately after creating 'app'
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
