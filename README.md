@@ -8,7 +8,7 @@
 
 `bun` is not required if you are not debugging the frontend. Frontend
 html should already be generated and added to version control.
-if not, see [Building Front End](#building-front-end)
+if not, see [Building Front End](#building-the-front-end)
 
 ## Running
 
@@ -24,7 +24,7 @@ DATABASE_URL=sqlite:///database.db
 ```
 
 HTML should already be generated and added to version control.
-if not, see [Building Front End](#building-front-end)
+if not, see [Building Front End](#building-the-front-end)
 
 ### Running the FastAPI server:
 
