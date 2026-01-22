@@ -1,1 +1,1 @@
-second test text for planned conflict
+Second text change by Eric to be resolved by Eric
