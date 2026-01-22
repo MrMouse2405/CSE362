@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="preload" href="/static/hx.min.js" as="script" />
+        <link rel="preload" href="/static/daisyui5.css" as="style" />
+        <link rel="preload" href="/static/daisyui5.js" as="script" />
+        <link rel="preload" href="/static/alpinejs.js" as="script" />
+        <link rel="stylesheet" href="/static/daisyui5.css" />
+
+        <script src="/static/hx.min.js" type="text/javascript"></script>
+        <script src="/static/daisyui5.js" type="text/javascript"></script>
+        <script src="/static/alpinejs.js" type="text/javascript"></script>
+        <title>CSE362</title>
+    </head>
+    <body class="flex items-center justify-center min-h-screen bg-base-200">
+        <div
+            class="card w-96 bg-base-100 shadow-xl"
+            x-data="{
+             result: null,
+             loading: false,
+             async getNumber() {
+                 this.loading = true;
+                 this.result = null; // Clear previous result while loading
+                 try {
+                     const response = await fetch('/api/v0/example/rand');
+                     const data = await response.json();
+                     // Here we extract ONLY the integer from the JSON
+                     this.result = data.number;
+                 } catch (error) {
+                     this.result = 'Error';
+                     console.error('Fetch error:', error);
+                 } finally {
+                     this.loading = false;
+                 }
+             }
+         }"
+        >
+            <div class="card-body">
+                <h2 class="card-title">Random Number Generator (Alpine)</h2>
+                <p class="text-gray-500 text-sm">/api/v0/example/rand</p>
+
+                <div class="card-actions justify-end mt-4">
+                    <button
+                        class="btn btn-primary"
+                        @click="getNumber()"
+                        :disabled="loading"
+                    >
+                        Fetch Number
+                    </button>
+                </div>
+
+                <div
+                    x-show="loading"
+                    class="flex justify-center py-4"
+                    style="display: none"
+                >
+                    <span
+                        class="loading loading-dots loading-lg text-primary"
+                    ></span>
+                </div>
+
+                <div class="mockup-code mt-4 bg-slate-800 text-green-400">
+                    <pre><code x-text="result !== null ? result : 'Waiting for click...'"></code></pre>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

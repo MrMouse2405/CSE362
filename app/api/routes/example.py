@@ -2,6 +2,7 @@ import random
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Form
+from fastapi.responses import HTMLResponse
 from pydantic.dataclasses import dataclass
 
 from app.auth import (
@@ -95,3 +96,13 @@ class FormResponse:
 )
 async def form_route(field1: Annotated[str, Form()], field2: Annotated[str, Form()]):
     return {"result": FormResponse(field1=field1, field2=field2)}
+
+
+@router.post(
+    "/htmx",
+    summary="htmx example",
+    description="htmx example",
+    response_class=HTMLResponse
+)
+async def html_route(text : Annotated[str, Form()]):
+    return HTMLResponse(content=f"<p>{text}</p>", media_type="text/html")
