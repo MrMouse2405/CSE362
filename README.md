@@ -70,5 +70,5 @@ The front end uses vite proxy to connect to the backend.
 So feel free to make requests to backend using relative paths:
 
 ```js
-fetch('/api/users')
+fetch("/api/v0/example/rand")
 ```

@@ -1,2 +1,5 @@
 .env
 *.ps1
+.venv
+__pycache__
+*.db
