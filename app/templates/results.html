@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Results{% endblock %}
+
+{% block content %}
+  <h2>Result</h2>
+
+  {% if outcome.ok %}
+    <p style="color: green;"><strong>Success:</strong> {{ outcome.message }}</p>
+    <p><strong>Field 1:</strong> {{ outcome.result.field1 }}</p>
+    <p><strong>Field 2:</strong> {{ outcome.result.field2 }}</p>
+  {% else %}
+    <p style="color: red;"><strong>Error:</strong> {{ outcome.message }}</p>
+  {% endif %}
+
+  <p><a href="/api/v0/lab4/form">Back to form</a></p>
+{% endblock %}

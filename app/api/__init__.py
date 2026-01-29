@@ -15,6 +15,7 @@ v0_router.include_router(westfall.router)
 v0_router.include_router(test.router)
 v0_router.include_router(lab4.router)
 
+
 api_router = APIRouter(prefix="/api")
 api_router.include_router(v0_router)
 logger.info("Initialized Routes")
