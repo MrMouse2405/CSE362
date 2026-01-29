@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Form{% endblock %}
+
+{% block content %}
+  <h2>Submit Data</h2>
+
+  <p>
+    <strong>GET</strong> loads this page.
+    <strong>POST</strong> sends the data entered below.
+  </p>
+
+  <form method="POST">
+    <label>Field 1:</label>
+    <input type="text" name="field1" />
+
+    <br /><br />
+
+    <label>Field 2:</label>
+    <input type="text" name="field2" />
+
+    <br /><br />
+
+    <button type="submit">Submit</button>
+  </form>
+{% endblock %}
+
