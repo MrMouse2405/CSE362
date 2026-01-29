@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Request, Form
+from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
@@ -12,6 +12,11 @@ router = APIRouter(
 )
 
 templates = Jinja2Templates(directory="app/templates")
+
+
+@router.get("/", response_class=HTMLResponse)
+async def home(request: Request):
+    return templates.TemplateResponse(request=request, name="home.html")
 
 
 @router.get("/form", response_class=HTMLResponse)
@@ -30,7 +35,5 @@ async def form_page_post(
     data = {"field1": field1, "field2": field2}
     outcome = process_form(data)
     return templates.TemplateResponse(
-        request=request,
-        name="results.html",
-        context={"outcome": outcome}
+        request=request, name="results.html", context={"outcome": outcome}
     )
