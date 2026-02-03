@@ -1,8 +1,16 @@
-{% extends "base.html" %}
-
-{% block title %}Home{% endblock %}
-
-{% block content %}
-  <p>This lab demonstrates FastAPI request/response flow using your existing project structure.</p>
-  <p>Go to <strong>Form</strong> to practice GET vs POST.</p>
-{% endblock %}
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>{% block title %}FastAPI Lab{% endblock %}</title>
+    </head>
+    <body>
+        <h1>FastAPI Lab</h1>
+        <nav>
+            <a href="/api/v0/lab4/">Home</a> |
+            <a href="/api/v0/lab4/form">Form</a>
+        </nav>
+        <hr />
+        {% block content %}{% endblock %}
+    </body>
+</html>
