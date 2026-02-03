@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Record</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.14/dist/full.min.css" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="min-h-screen bg-base-200">
+
+<div class="container mx-auto p-6 max-w-2xl">
+
+    <h1 class="text-3xl font-bold mb-6">Create New Record</h1>
+
+    <!--
+        x-data: Reactive state for the form
+        - title/details: form field values
+        - submitting: prevents double-submit
+        - error: holds error message if creation fails
+    -->
+    <div x-data="{
+        title: '',
+        details: '',
+        submitting: false,
+        error: null,
+        async submitForm() {
+            this.submitting = true;
+            this.error = null;
+
+            try {
+                // Create FormData object - this matches what the API expects
+                const formData = new FormData();
+                formData.append('title', this.title);
+                formData.append('details', this.details);
+
+                const response = await fetch('/api/v0/records', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.ok) {
+                    // Success - redirect to the list page
+                    window.location.href = '/records.html';
+                } else {
+                    // API returned an error (like duplicate title)
+                    this.error = data.message;
+                }
+            } catch (e) {
+                // Network or other error
+                this.error = 'Failed to create record. Please try again.';
+            } finally {
+                this.submitting = false;
+            }
+        }
+    }">
+
+        <!-- Error Alert -->
+        <div x-show="error" class="alert alert-error mb-4">
+            <span x-text="error"></span>
+        </div>
+
+        <!-- Form -->
+        <!-- @submit.prevent: Prevents default form submission, calls our function instead -->
+        <form @submit.prevent="submitForm()" class="space-y-4">
+
+            <!-- Title Field -->
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text">Title *</span>
+                </label>
+                <!-- x-model: Two-way binding between input and title variable -->
+                <input type="text"
+                       x-model="title"
+                       class="input input-bordered w-full"
+                       placeholder="Enter record title"
+                       required>
+                <label class="label">
+                    <span class="label-text-alt">Title must be unique</span>
+                </label>
+            </div>
+
+            <!-- Details Field -->
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text">Details</span>
+                </label>
+                <textarea x-model="details"
+                          class="textarea textarea-bordered w-full"
+                          rows="4"
+                          placeholder="Enter details (optional)"></textarea>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="flex gap-4">
+                <button type="submit"
+                        class="btn btn-primary"
+                        :disabled="submitting">
+                    <!-- Show spinner when submitting -->
+                    <span x-show="submitting" class="loading loading-spinner loading-sm"></span>
+                    <span x-text="submitting ? 'Creating...' : 'Create Record'"></span>
+                </button>
+                <a href="/records.html" class="btn btn-ghost">Cancel</a>
+            </div>
+        </form>
+    </div>
+
+</div>
+
+</body>
+</html>

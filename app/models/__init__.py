@@ -2,6 +2,7 @@ from loguru import logger
 from sqlmodel import Session, SQLModel, create_engine
 
 import app.models.users as users
+import app.models.records as records
 
 engine = None
 
@@ -20,4 +21,4 @@ def make_db_session() -> Session:
     return Session(engine)
 
 
-__all__ = ["make_db_session", "users", "init_db"]
+__all__ = ["make_db_session", "users", "records", "init_db"]
