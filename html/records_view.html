@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Record</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.14/dist/full.min.css" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="min-h-screen bg-base-200">
+
+<div class="container mx-auto p-6 max-w-2xl">
+
+    <!--
+        Main Alpine component
+
+        State:
+        - recordId: extracted from URL ?id=X
+        - record: the fetched record object
+        - loading/error/message: UI state
+
+        Methods:
+        - fetchRecord(): load the record from API
+        - submitRecord(): draft → submitted
+        - archiveRecord(): submitted → archived
+        - deleteRecord(): remove (only if draft)
+    -->
+    <div x-data="{
+        recordId: new URLSearchParams(window.location.search).get('id'),
+        record: null,
+        loading: true,
+        error: null,
+        message: null,
+
+        async fetchRecord() {
+            if (!this.recordId) {
+                this.error = 'No record ID provided';
+                this.loading = false;
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/v0/records/' + this.recordId);
+                if (!response.ok) {
+                    this.error = 'Record not found';
+                } else {
+                    this.record = await response.json();
+                }
+            } catch (e) {
+                this.error = 'Failed to load record';
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async submitRecord() {
+            this.message = null;
+            this.error = null;
+
+            try {
+                const response = await fetch('/api/v0/records/' + this.recordId + '/submit', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+
+                if (data.ok) {
+                    this.record = data.record;
+                    this.message = data.message;
+                } else {
+                    this.error = data.message;
+                }
+            } catch (e) {
+                this.error = 'Failed to submit record';
+            }
+        },
+
+        async archiveRecord() {
+            this.message = null;
+            this.error = null;
+
+            try {
+                const response = await fetch('/api/v0/records/' + this.recordId + '/archive', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+
+                if (data.ok) {
+                    this.record = data.record;
+                    this.message = data.message;
+                } else {
+                    this.error = data.message;
+                }
+            } catch (e) {
+                this.error = 'Failed to archive record';
+            }
+        },
+
+        async deleteRecord() {
+            // Confirm before deleting
+            if (!confirm('Are you sure you want to delete this record?')) {
+                return;
+            }
+
+            this.message = null;
+            this.error = null;
+
+            try {
+                const response = await fetch('/api/v0/records/' + this.recordId, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+
+                if (data.ok) {
+                    // Redirect to list after successful delete
+                    window.location.href = '/records.html';
+                } else {
+                    this.error = data.message;
+                }
+            } catch (e) {
+                this.error = 'Failed to delete record';
+            }
+        }
+    }" x-init="fetchRecord()">
+
+        <!-- Loading State -->
+        <div x-show="loading" class="text-center py-8">
+            <span class="loading loading-spinner loading-lg"></span>
+        </div>
+
+        <!-- Error State (no record found) -->
+        <div x-show="!loading && error && !record" class="text-center py-8">
+            <div class="alert alert-error">
+                <span x-text="error"></span>
+            </div>
+            <a href="/records.html" class="btn btn-primary mt-4">Back to Records</a>
+        </div>
+
+        <!-- Record Details -->
+        <div x-show="!loading && record">
+
+            <!-- Success/Error Messages -->
+            <div x-show="message" class="alert alert-success mb-4">
+                <span x-text="message"></span>
+            </div>
+            <div x-show="error" class="alert alert-error mb-4">
+                <span x-text="error"></span>
+            </div>
+
+            <!-- Record Card -->
+            <div class="card bg-base-100 shadow-xl">
+                <div class="card-body">
+
+                    <!-- Title and Status -->
+                    <div class="flex justify-between items-start">
+                        <h2 class="card-title text-2xl" x-text="record.title"></h2>
+                        <span class="badge badge-lg"
+                              :class="{
+                                  'badge-warning': record.status === 'draft',
+                                  'badge-info': record.status === 'submitted',
+                                  'badge-success': record.status === 'archived'
+                              }"
+                              x-text="record.status"></span>
+                    </div>
+
+                    <!-- ID -->
+                    <p class="text-base-content/60">ID: <span x-text="record.id"></span></p>
+
+                    <!-- Details -->
+                    <div class="mt-4">
+                        <h3 class="font-semibold mb-2">Details</h3>
+                        <p class="whitespace-pre-wrap"
+                           x-text="record.details || 'No details provided.'"></p>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="card-actions justify-end mt-6">
+
+                        <!-- Edit Button - only for draft records -->
+                        <a x-show="record.status === 'draft'"
+                           :href="'/records_edit.html?id=' + record.id"
+                           class="btn btn-outline">
+                            Edit
+                        </a>
+
+                        <!-- Submit Button - only for draft records -->
+                        <button x-show="record.status === 'draft'"
+                                @click="submitRecord()"
+                                class="btn btn-info">
+                            Submit
+                        </button>
+
+                        <!-- Archive Button - only for submitted records -->
+                        <button x-show="record.status === 'submitted'"
+                                @click="archiveRecord()"
+                                class="btn btn-success">
+                            Archive
+                        </button>
+
+                        <!-- Delete Button - only for draft records -->
+                        <button x-show="record.status === 'draft'"
+                                @click="deleteRecord()"
+                                class="btn btn-error">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Back Link -->
+            <div class="mt-6">
+                <a href="/records.html" class="btn btn-ghost">← Back to Records</a>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

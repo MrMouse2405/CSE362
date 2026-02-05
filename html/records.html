@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Records</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.14/dist/full.min.css" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="min-h-screen bg-base-200">
+
+<div class="container mx-auto p-6">
+
+    <!-- Page Header -->
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold">Records</h1>
+        <a href="/records_new.html" class="btn btn-primary">+ New Record</a>
+    </div>
+
+    <!-- Records List Container -->
+    <!--
+        x-data: Creates a reactive data object with:
+        - records: array to hold fetched records
+        - loading: boolean for loading state
+        - fetchRecords(): async function to load data
+
+        x-init: Runs fetchRecords() when the page loads
+    -->
+    <div x-data="{
+        records: [],
+        loading: true,
+        async fetchRecords() {
+            try {
+                const response = await fetch('/api/v0/records');
+                this.records = await response.json();
+            } catch (error) {
+                console.error('Failed to fetch records:', error);
+            } finally {
+                this.loading = false;
+            }
+        }
+    }" x-init="fetchRecords()">
+
+        <!-- Loading State -->
+        <div x-show="loading" class="text-center py-8">
+            <span class="loading loading-spinner loading-lg"></span>
+        </div>
+
+        <!-- Empty State -->
+        <div x-show="!loading && records.length === 0" class="text-center py-8">
+            <p class="text-base-content/60">No records found.</p>
+            <a href="/records_new.html" class="btn btn-primary mt-4">Create your first record</a>
+        </div>
+
+        <!-- Records Table -->
+        <!--
+            x-show: Only display when not loading AND we have records
+            The table uses x-for to loop over each record
+        -->
+        <div x-show="!loading && records.length > 0" class="overflow-x-auto">
+            <table class="table table-zebra w-full">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Title</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!--
+                        x-for: Loop over records array
+                        :key: Unique identifier for Vue/Alpine's virtual DOM
+                    -->
+                    <template x-for="record in records" :key="record.id">
+                        <tr>
+                            <td x-text="record.id"></td>
+                            <td>
+                                <!--
+                                    :href: Dynamic attribute binding
+                                    Builds URL like /records_view.html?id=1
+                                -->
+                                <a :href="'/records_view.html?id=' + record.id"
+                                   class="link link-primary"
+                                   x-text="record.title"></a>
+                            </td>
+                            <td>
+                                <!--
+                                    Status badge with dynamic styling
+                                    The class changes based on status value
+                                -->
+                                <span class="badge"
+                                      :class="{
+                                          'badge-warning': record.status === 'draft',
+                                          'badge-info': record.status === 'submitted',
+                                          'badge-success': record.status === 'archived'
+                                      }"
+                                      x-text="record.status"></span>
+                            </td>
+                            <td>
+                                <a :href="'/records_view.html?id=' + record.id"
+                                   class="btn btn-sm btn-ghost">View</a>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Back to Home Link -->
+    <div class="mt-6">
+        <a href="/" class="btn btn-ghost">← Back to Home</a>
+    </div>
+
+</div>
+
+</body>
+</html>
