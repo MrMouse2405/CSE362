@@ -1,8 +1,8 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Form, HTTPException
 from pydantic.dataclasses import dataclass
 from starlette.status import HTTP_404_NOT_FOUND
+from fastapi import APIRouter, Form, HTTPException, Query
 
 from app.services.records import (
     create_record_service,
@@ -12,6 +12,7 @@ from app.services.records import (
     archive_record_service,
     delete_record_service,
     edit_record_service,
+    search_records_service,
 )
 
 # Create a router with a common prefix for all record routes
@@ -44,27 +45,22 @@ class MessageResponse:
 
 
 # ============================================================
-# LIST ALL RECORDS
+# LIST OR SEARCH RECORDS
 # ============================================================
 
 @router.get(
     "",
-    summary="List all records",
-    description="Returns all records in the system.",
+    summary="List or search records",
+    description="Returns all records, or records matching a title keyword.",
 )
-async def list_records() -> list[RecordResponse]:
-    """
-    GET /api/v0/records
-
-    Returns an array of all records.
-    """
-    records = list_records_service()
+async def list_records(q: str = Query(default="")) -> list[RecordResponse]:
+    records = search_records_service(q)
     return [
         RecordResponse(
             id=r.id,
             title=r.title,
             details=r.details,
-            status=r.status.value,  # Convert Enum to string
+            status=r.status.value,
         )
         for r in records
     ]

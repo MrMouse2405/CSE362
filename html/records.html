@@ -18,21 +18,17 @@
         <a href="/records_new.html" class="btn btn-primary">+ New Record</a>
     </div>
 
-    <!-- Records List Container -->
-    <!--
-        x-data: Creates a reactive data object with:
-        - records: array to hold fetched records
-        - loading: boolean for loading state
-        - fetchRecords(): async function to load data
-
-        x-init: Runs fetchRecords() when the page loads
-    -->
+    <!-- Alpine.js Component -->
     <div x-data="{
         records: [],
         loading: true,
+        searchQuery: '',
         async fetchRecords() {
             try {
-                const response = await fetch('/api/v0/records');
+                const url = this.searchQuery.trim()
+                    ? '/api/v0/records?q=' + encodeURIComponent(this.searchQuery.trim())
+                    : '/api/v0/records';
+                const response = await fetch(url);
                 this.records = await response.json();
             } catch (error) {
                 console.error('Failed to fetch records:', error);
@@ -41,6 +37,17 @@
             }
         }
     }" x-init="fetchRecords()">
+
+        <!-- Search -->
+        <div class="flex gap-2 mb-4">
+            <input type="text"
+                   x-model="searchQuery"
+                   placeholder="Search by title..."
+                   class="input input-bordered w-full max-w-sm"
+                   @keydown.enter.prevent="fetchRecords()">
+            <button @click="fetchRecords()" class="btn btn-primary">Search</button>
+            <button @click="searchQuery = ''; fetchRecords()" class="btn btn-ghost">Clear</button>
+        </div>
 
         <!-- Loading State -->
         <div x-show="loading" class="text-center py-8">
@@ -54,10 +61,6 @@
         </div>
 
         <!-- Records Table -->
-        <!--
-            x-show: Only display when not loading AND we have records
-            The table uses x-for to loop over each record
-        -->
         <div x-show="!loading && records.length > 0" class="overflow-x-auto">
             <table class="table table-zebra w-full">
                 <thead>
@@ -69,27 +72,15 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <!--
-                        x-for: Loop over records array
-                        :key: Unique identifier for Vue/Alpine's virtual DOM
-                    -->
                     <template x-for="record in records" :key="record.id">
                         <tr>
                             <td x-text="record.id"></td>
                             <td>
-                                <!--
-                                    :href: Dynamic attribute binding
-                                    Builds URL like /records_view.html?id=1
-                                -->
                                 <a :href="'/records_view.html?id=' + record.id"
                                    class="link link-primary"
                                    x-text="record.title"></a>
                             </td>
                             <td>
-                                <!--
-                                    Status badge with dynamic styling
-                                    The class changes based on status value
-                                -->
                                 <span class="badge"
                                       :class="{
                                           'badge-warning': record.status === 'draft',
@@ -107,6 +98,7 @@
                 </tbody>
             </table>
         </div>
+
     </div>
 
     <!-- Back to Home Link -->
