@@ -1,0 +1,34 @@
+name: CI / Tests
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
+
+jobs:
+  test-backend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python and uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Create mock static file
+        run: |
+          mkdir -p backend/app/static
+          echo "<html><body>Mock Svelte Build</body></html>" > backend/app/static/index.html
+
+      - name: Run Pytest
+        run: |
+          cd backend
+          uv run pytest
