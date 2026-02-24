@@ -1,0 +1,59 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+
+      - name: Build Svelte Frontend
+        run: |
+          cd frontend
+          bun install
+          bun run build
+        # This automatically populates backend/app/static based on svelte.config.js
+
+      - name: Setup Python and uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      # --- Protect the release by running tests ---
+      - name: Run Backend Tests
+        run: |
+          cd backend
+          # uv run automatically resolves the environment and runs pytest
+          uv run pytest
+      # ------------------------------------------------------
+
+      - name: Export requirements.txt
+        run: |
+          cd backend
+          uv pip compile pyproject.toml -o requirements.txt
+
+      - name: Package Release Artifacts
+        run: |
+          mkdir release_artifact
+          cp -r backend/app release_artifact/
+          cp backend/requirements.txt release_artifact/
+          cp README.md LICENSE release_artifact/
+          cd release_artifact
+          zip -r ../app-release.zip .
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: app-release.zip
+          generate_release_notes: true
