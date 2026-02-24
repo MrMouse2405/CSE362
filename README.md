@@ -1,74 +1,22 @@
-# CSE362 Lab 2
+# CSE362 Project
 
-## Dependencies
+## Running the Production Release
 
-`uv` package manager for python (fastapi) backend
+This release is a self-contained bundle containing the compiled frontend and the FastAPI backend. You do not need Node, Bun, or uv to run this release.
 
-`bun` package manager for javascript (sveltekit+typescript) frontend. 
+**Prerequisites:** Python 3.10+
 
-`bun` is not required if you are not debugging the frontend. Frontend
-html should already be generated and added to version control.
-if not, see [Building Front End](#building-the-front-end)
-
-## Running
-
-Set the following environment variables in .env
-
-**NOTE:** Use a cryptographically secure random string for the SECRET_KEY.
-
-```env
-ROOT_USER_NAME=root
-ROOT_USER_PASSWORD=your_root_password_here
-SECRET_KEY=your_secret_key_here
-DATABASE_URL=sqlite:///database.db
-```
-
-HTML should already be generated and added to version control.
-if not, see [Building Front End](#building-the-front-end)
-
-### Running the FastAPI server:
+1. Unzip `app-release.zip`
+2. Install dependencies:
 
 ```bash
-cd backend
-uv run fastapi run
+pip install -r requirements.txt
 ```
 
-### Debugging / developing the backend
+3. Run the server:
 
 ```bash
-cd backend
-uv run fastapi dev
+uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-## Building the front end
-
-You will need to build the front end using the following command:
-
-```bash
-cd frontend
-bun install # once to install dependencies
-bun run build # to generate static html content
-```
-
-### Debugging/developing the front end
-
-You will also need to run the backend using:
-
-```bash
-cd backend
-uv run fastapi run # or uv run fastapi dev
-```
-Then you may run the frontend using:
-
-```bash
-cd frontend
-bun run dev
-```
-
-The front end uses vite proxy to connect to the backend.
-
-So feel free to make requests to backend using relative paths:
-
-```js
-fetch("/api/v0/example/rand")
-```
+4. Visit http://localhost:8000 in your browser.

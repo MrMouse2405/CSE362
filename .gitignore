@@ -4,3 +4,6 @@
 __pycache__
 *.db
 .idea
+.vscode
+.pytest_cache
+tag-event.json
