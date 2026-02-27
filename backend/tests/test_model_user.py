@@ -10,7 +10,7 @@ Covers:
 
 import uuid
 import pytest
-from backend.app.models.user import User, UserRole
+from app.models.user import User, UserRole
 
 
 
@@ -66,8 +66,7 @@ class TestUserRoleAssignment:
 class TestUserRoleValidation:
     """
     Role validation is enforced via a Pydantic field_validator which runs
-    during model_validate (the path used by FastAPI / Pydantic when
-    deserialising request bodies and DB rows).
+    during model_validate.
     """
 
     @pytest.mark.parametrize("bad_role", ["moderator", "superadmin", "", "STUDENT", "Admin"])
