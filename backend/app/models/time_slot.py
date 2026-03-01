@@ -32,7 +32,7 @@ class TimeSlot(SQLModel, table=True):
 
     id: int | None = Field(default=None, primary_key=True)
     room_id: int = Field(foreign_key = "room.id", nullable=False)
-    date: date = Field(nullable=False)
+    slot_date: date = Field(nullable=False)
     start_time: time = Field(nullable=False)
     end_time: time = Field(nullable=False)
     status: TimeslotStatus = Field(default=TimeslotStatus.AVAILABLE)
