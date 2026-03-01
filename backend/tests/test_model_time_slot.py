@@ -10,7 +10,7 @@ Covers:
 
 import pytest
 from datetime import date, time
-from backend.app.models.time_slot import TimeSlot, TimeslotStatus
+from app.models.time_slot import TimeSlot, TimeslotStatus
 
 
 class TestValidTransitions:
