@@ -11,7 +11,11 @@ import os
 from fastapi import FastAPI
 from starlette.responses import FileResponse
 
+from app.routes.auth import router as auth_router
+
 app = FastAPI()
+
+app.include_router(auth_router)
 
 
 @app.get("/api/health")

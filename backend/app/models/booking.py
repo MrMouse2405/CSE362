@@ -11,9 +11,7 @@ from sqlmodel import Field, SQLModel
 class Booking(SQLModel, table=True):
     """
     Represents a confirmed room booking.
-
-    Attributes:
-        id (int | None): The primary key of the booking. Defaults to None.
     """
 
     id: int | None = Field(default=None, primary_key=True)
+    """The primary key of the booking. Defaults to `None`."""

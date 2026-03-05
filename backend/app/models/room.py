@@ -18,18 +18,13 @@ from sqlmodel import Field, SQLModel
 class Room(SQLModel, table=True):
     """
     Represents a bookable physical space at the campus.
-
-    Attributes:
-        id (Optional[int]): The primary key of the room. Defaults to None.
-        name (str): The human-readable name of the room (e.g., "A-203"). Must be unique.
-        capacity (int): The maximum number of people the room can accommodate. Must be >= 1.
     """
 
     id: Optional[int] = Field(default=None, primary_key=True)
+    """The primary key of the room."""
 
-    # Name must be required, unique, & NOT NULL
-    # Must also be in a human-readable form, like A-203
     name: str = Field(sa_column=Column(String, unique=True, nullable=False))
+    """The human-readable name of the room (e.g., `"A-203"`). Must be unique."""
 
-    # Capacity is required and must be positive
     capacity: int = Field(nullable=False, ge=1)
+    """The maximum number of people the room can accommodate. Must be `>= 1`."""

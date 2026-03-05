@@ -11,9 +11,7 @@ from sqlmodel import Field, SQLModel
 class Notification(SQLModel, table=True):
     """
     Represents a system notification.
-
-    Attributes:
-        id (int | None): The primary key of the notification. Defaults to None.
     """
 
     id: int | None = Field(default=None, primary_key=True)
+    """The primary key of the notification. Defaults to `None`."""

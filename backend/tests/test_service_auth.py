@@ -13,7 +13,6 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.models.user import User, UserRole
 from app.services.auth import (
     auth_backend,
-    deactivate_user,
     fastapi_users,
     require_admin,
 )
@@ -183,15 +182,16 @@ async def test_require_admin_passes(client: AsyncClient, user_manager: UserManag
 
 
 @pytest.mark.asyncio
-async def test_deactivate_user(session: AsyncSession, user_manager: UserManager):
+async def test_admin_update_user(user_manager: UserManager):
     user_create = UserCreate(email="todeactivate@example.com", password="password123")
     user = await user_manager.create(user_create)
     assert user.is_active is True
 
     # Test our function
-    deactivated = await deactivate_user(user.id, session)
-    assert deactivated.is_active is False  # type: ignore
-    assert deactivated.id == user.id  # type : ignore
+    updated = await user_manager.admin_update_user(user.id, is_active=False)
+    assert updated is not None
+    assert updated.is_active is False
+    assert updated.id == user.id
 
     # Verify via DB
     db_user = await user_manager.get(user.id)

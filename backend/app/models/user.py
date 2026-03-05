@@ -1,8 +1,9 @@
 """
-User model — from ISS-01
+User Model Module.
 
-Extends the fastapi-users SQLModel base user with a role attribute
-that determines access level and booking-request tagging.
+This module defines the `User` entity, representing an authenticated person in the system.
+It extends the base SQLModel user provided by `fastapi-users` by adding a role-based
+attribute to handle different levels of system access.
 
 Traces to: UC-1, UC-5 | Domain class: User
 """
@@ -17,35 +18,35 @@ from sqlmodel import Field
 
 
 class UserRole(str, enum.Enum):
-    """Allowed roles for a User in the room-booking system."""
+    """
+    Enumeration of allowed roles for a User in the room-booking system.
+    """
 
     STUDENT = "student"
+    """A standard user with base booking privileges."""
     TEACHER = "teacher"
+    """An instructor user with elevated booking privileges."""
     ADMIN = "admin"
+    """A system administrator with full access rights."""
 
 
 class User(SQLModelBaseUserDB, table=True):
     """
     Represents any authenticated person in the system.
 
-    Inherits from SQLModelBaseUserDB which provides:
-        id          – UUID, primary key
-        email       – str, unique login identifier
-        hashed_password – str
-        is_active   – bool (default True)
-        is_superuser – bool (default False)
-        is_verified – bool (default False)
-
-    Added by this model:
-        role        – UserRole enum stored as a string (default "student")
+    This class inherits from `SQLModelBaseUserDB` which provides core authentication
+    attributes, and it adds a specific role attribute for access control.
     """
 
     role: UserRole = Field(default=UserRole.STUDENT)
+    """The system role of the user (e.g., student, teacher, admin). Defaults to `UserRole.STUDENT`."""
 
     @field_validator("role", mode="before")
     @classmethod
     def validate_role(cls, v: object) -> UserRole:
-        """Ensure the role value is a valid UserRole member."""
+        """
+        Validates and coerces the incoming value for the user's role.
+        """
         if isinstance(v, UserRole):
             return v
         try:
@@ -55,23 +56,26 @@ class User(SQLModelBaseUserDB, table=True):
             raise ValueError(f"Invalid role '{v}'. Must be one of: {allowed}")
 
     @classmethod
-    async def deactivate_user(
-        cls, user_id: uuid.UUID, session: AsyncSession
+    async def admin_update(
+        cls,
+        user_id: uuid.UUID,
+        session: AsyncSession,
+        role: UserRole | None = None,
+        is_active: bool | None = None,
     ) -> "User | None":
         """
-        Deactivates a user by setting their is_active status to False.
-
-        Args:
-            user_id (uuid.UUID): The UUID of the user to deactivate.
-            session (AsyncSession): The asynchronous database session.
-
-        Returns:
-            User | None: The deactivated User object, or None if the user was not found.
+        Updates a user's role or active status.
         """
         user = await session.get(cls, user_id)
-        if user:
-            user.is_active = False
-            session.add(user)
-            await session.commit()
-            await session.refresh(user)
+        if not user:
+            return None
+
+        if role is not None:
+            user.role = role
+        if is_active is not None:
+            user.is_active = is_active
+
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
         return user
