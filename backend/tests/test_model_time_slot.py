@@ -12,7 +12,7 @@ from datetime import date, time
 
 import pytest
 
-from app.models import TimeSlot, TimeslotStatus
+from app.models.time_slot import TimeSlot, TimeslotStatus
 
 
 class TestValidTransitions:

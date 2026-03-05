@@ -13,6 +13,7 @@ from sqlmodel import SQLModel
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.database import engine, get_session
+from app.models import Booking, Notification, Room, TimeSlot, User  # noqa: F401
 
 
 def test_database_url_configurable(monkeypatch):
