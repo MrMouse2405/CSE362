@@ -9,13 +9,15 @@ Timeslots are the atomic unit of scheduling in this system and allow tracking fo
 Traces to: UC-2, UC-3, UC-4 | Domain class: TimeSlot
 """
 
-from enum import Enum
-from sqlmodel import Field, SQLModel
 from datetime import date, time
+from enum import Enum
+
+from sqlmodel import Field, SQLModel
 
 
 class TimeslotStatus(str, Enum):
     """Allowed states for a room in the room-booking system."""
+
     AVAILABLE = "available"
     HELD = "held"
     BOOKED = "booked"
@@ -29,28 +31,25 @@ class TimeSlot(SQLModel, table=True):
     Inherits from SQLModel
     """
 
-
     id: int | None = Field(default=None, primary_key=True)
-    room_id: int = Field(foreign_key = "room.id", nullable=False)
+    room_id: int = Field(foreign_key="room.id", nullable=False)
     slot_date: date = Field(nullable=False)
     start_time: time = Field(nullable=False)
     end_time: time = Field(nullable=False)
     status: TimeslotStatus = Field(default=TimeslotStatus.AVAILABLE)
     booking_id: int | None = Field(default=None, foreign_key="booking.id")
 
-
     def hold(self):
         """Temporarily reserving the room, ensuring it is currently available before holding it."""
         if self.status != TimeslotStatus.AVAILABLE:
             raise ValueError("Only available timeslots can be held.")
         self.status = TimeslotStatus.HELD
-   
+
     def book(self):
         """Reserving a room, ensuring it is currently held before booking it."""
         if self.status != TimeslotStatus.HELD:
             raise ValueError("Only held timeslots can be booked.")
         self.status = TimeslotStatus.BOOKED
-
 
     def release(self):
         """Unreserving a room, ensuring it is currently held or booked before releasing it."""

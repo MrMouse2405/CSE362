@@ -8,9 +8,10 @@ Traces to: UC-1, UC-5 | Domain class: User
 """
 
 import enum
-from sqlmodel import Field
-from pydantic import field_validator
+
 from fastapi_users_db_sqlmodel import SQLModelBaseUserDB
+from pydantic import field_validator
+from sqlmodel import Field
 
 
 class UserRole(str, enum.Enum):
@@ -49,6 +50,4 @@ class User(SQLModelBaseUserDB, table=True):
             return UserRole(v)
         except ValueError:
             allowed = ", ".join(r.value for r in UserRole)
-            raise ValueError(
-                f"Invalid role '{v}'. Must be one of: {allowed}"
-            )
+            raise ValueError(f"Invalid role '{v}'. Must be one of: {allowed}")

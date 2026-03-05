@@ -1,8 +1,10 @@
 from fastapi.testclient import TestClient
+
 from app.main import app
 
 # Initialize the test client with our FastAPI app
 client = TestClient(app)
+
 
 def test_health_check():
     """Test that the REST API health endpoint returns a 200 OK."""
