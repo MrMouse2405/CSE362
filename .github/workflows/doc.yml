@@ -36,7 +36,9 @@ jobs:
 
       - name: Build documentation
         working-directory: backend
-        run: uv run pdoc -o docs/ app
+        run: |
+          uv run pdoc -o docs/ app
+          mv docs/app.html docs/index.html
 
       - uses: actions/upload-pages-artifact@v3
         with:
