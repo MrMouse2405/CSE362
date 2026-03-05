@@ -8,9 +8,11 @@ Traces to: UC-1, UC-5 | Domain class: User
 """
 
 import enum
+import uuid
 
 from fastapi_users_db_sqlmodel import SQLModelBaseUserDB
 from pydantic import field_validator
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import Field
 
 
@@ -51,3 +53,25 @@ class User(SQLModelBaseUserDB, table=True):
         except ValueError:
             allowed = ", ".join(r.value for r in UserRole)
             raise ValueError(f"Invalid role '{v}'. Must be one of: {allowed}")
+
+    @classmethod
+    async def deactivate_user(
+        cls, user_id: uuid.UUID, session: AsyncSession
+    ) -> "User | None":
+        """
+        Deactivates a user by setting their is_active status to False.
+
+        Args:
+            user_id (uuid.UUID): The UUID of the user to deactivate.
+            session (AsyncSession): The asynchronous database session.
+
+        Returns:
+            User | None: The deactivated User object, or None if the user was not found.
+        """
+        user = await session.get(cls, user_id)
+        if user:
+            user.is_active = False
+            session.add(user)
+            await session.commit()
+            await session.refresh(user)
+        return user

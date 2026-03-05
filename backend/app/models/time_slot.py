@@ -1,10 +1,8 @@
 """
-TimeSlot Model — from ISS-03
+TimeSlot Model Module.
 
-
-Defines a TimeSlot model representing a bookable time window for a specific room and date
+Defines a `TimeSlot` model representing a bookable time window for a specific room and date.
 Timeslots are the atomic unit of scheduling in this system and allow tracking for availability.
-
 
 Traces to: UC-2, UC-3, UC-4 | Domain class: TimeSlot
 """
@@ -16,7 +14,14 @@ from sqlmodel import Field, SQLModel
 
 
 class TimeslotStatus(str, Enum):
-    """Allowed states for a room in the room-booking system."""
+    """
+    Allowed states for a room timeslot in the room-booking system.
+
+    Attributes:
+        AVAILABLE: The timeslot is free to be held or booked.
+        HELD: The timeslot is temporarily reserved.
+        BOOKED: The timeslot is fully confirmed and reserved.
+    """
 
     AVAILABLE = "available"
     HELD = "held"
@@ -25,10 +30,16 @@ class TimeslotStatus(str, Enum):
 
 class TimeSlot(SQLModel, table=True):
     """
-    Represents any room request in the system.
+    Represents any room request or timeslot unit in the system.
 
-
-    Inherits from SQLModel
+    Attributes:
+        id (int | None): The primary key for the timeslot.
+        room_id (int): Foreign key linking to the associated Room.
+        slot_date (date): The specific date of the timeslot.
+        start_time (time): The start time of the timeslot window.
+        end_time (time): The end time of the timeslot window.
+        status (TimeslotStatus): Current status of the slot (available, held, booked).
+        booking_id (int | None): Foreign key linking to a confirmed Booking.
     """
 
     id: int | None = Field(default=None, primary_key=True)
@@ -40,19 +51,34 @@ class TimeSlot(SQLModel, table=True):
     booking_id: int | None = Field(default=None, foreign_key="booking.id")
 
     def hold(self):
-        """Temporarily reserving the room, ensuring it is currently available before holding it."""
+        """
+        Temporarily reserve the room timeslot.
+
+        Raises:
+            ValueError: If the status is not TimeslotStatus.AVAILABLE.
+        """
         if self.status != TimeslotStatus.AVAILABLE:
             raise ValueError("Only available timeslots can be held.")
         self.status = TimeslotStatus.HELD
 
     def book(self):
-        """Reserving a room, ensuring it is currently held before booking it."""
+        """
+        Confirm a reservation for the room timeslot.
+
+        Raises:
+            ValueError: If the status is not TimeslotStatus.HELD.
+        """
         if self.status != TimeslotStatus.HELD:
             raise ValueError("Only held timeslots can be booked.")
         self.status = TimeslotStatus.BOOKED
 
     def release(self):
-        """Unreserving a room, ensuring it is currently held or booked before releasing it."""
+        """
+        Cancel a reservation or hold on the room timeslot, freeing it.
+
+        Raises:
+            ValueError: If the status is not TimeslotStatus.HELD or TimeslotStatus.BOOKED.
+        """
         if self.status != TimeslotStatus.HELD and self.status != TimeslotStatus.BOOKED:
             raise ValueError("Only held or booked timeslots can be released.")
         self.status = TimeslotStatus.AVAILABLE

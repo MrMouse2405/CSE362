@@ -1,7 +1,8 @@
 """
-Room model — from ISS-02
+Room Model Module.
 
-
+This module defines the `Room` entity for the room-booking system.
+A room represents a physical space with a specific capacity.
 
 Traces to: UC-2 | Domain class: Room
 """
@@ -15,7 +16,14 @@ from sqlmodel import Field, SQLModel
 
 
 class Room(SQLModel, table=True):
-    "A bookable physical space at the campus"
+    """
+    Represents a bookable physical space at the campus.
+
+    Attributes:
+        id (Optional[int]): The primary key of the room. Defaults to None.
+        name (str): The human-readable name of the room (e.g., "A-203"). Must be unique.
+        capacity (int): The maximum number of people the room can accommodate. Must be >= 1.
+    """
 
     id: Optional[int] = Field(default=None, primary_key=True)
 

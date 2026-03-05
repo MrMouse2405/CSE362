@@ -1,7 +1,8 @@
 """
+Database Connection Module.
 
-Database Connector
-
+This module initializes the asynchronous database engine and provides a dependency
+for FastAPI to inject database sessions into route handlers.
 """
 
 import os
@@ -17,5 +18,11 @@ engine = create_async_engine(DATABASE_URL, connect_args=connect_args)
 
 
 async def get_session():
+    """
+    Generator dependency that yields an asynchronous database session.
+
+    Yields:
+        AsyncSession: An asynchronous SQLModel/SQLAlchemy session.
+    """
     async with AsyncSession(engine) as session:
         yield session
