@@ -15,10 +15,15 @@ initialization.
 - `Notification`: Represents a system alert or message.
 """
 
-from .booking import Booking
+from .booking import (
+    Booking,
+    BookingStatus,
+    RecurrenceFrequency,
+    TimeSlot,
+    TimeslotStatus,
+)
 from .notification import Notification
 from .room import Room
-from .time_slot import TimeSlot
 from .user import User, UserRole
 
 __all__ = [
@@ -26,6 +31,9 @@ __all__ = [
     "UserRole",
     "Room",
     "TimeSlot",
+    "TimeslotStatus",
+    "RecurrenceFrequency",
+    "BookingStatus",
     "Booking",
     "Notification",
 ]
