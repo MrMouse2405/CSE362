@@ -15,6 +15,8 @@ from uuid import UUID
 from pydantic import field_validator, model_validator
 from sqlmodel import Field, Relationship, SQLModel
 
+from .user import UserRole
+
 
 class BookingStatus(str, Enum):
     """
@@ -43,6 +45,7 @@ class Booking(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     userID: UUID = Field(foreign_key="user.id", nullable=False)
+    submittedByRole: UserRole = Field(default=UserRole.STUDENT, nullable=False)
     roomID: int = Field(foreign_key="room.id", nullable=False)
     status: BookingStatus = Field(default=BookingStatus.PENDING)
     recurrenceFrequency: RecurrenceFrequency = Field(default=RecurrenceFrequency.NONE)
@@ -79,6 +82,22 @@ class Booking(SQLModel, table=True):
         except ValueError:
             allowed = ", ".join(t.value for t in RecurrenceFrequency)
             raise ValueError(f"Invalid recurrence '{a}'. Must be one of: {allowed}")
+
+    @field_validator("submittedByRole", mode="before")
+    @classmethod
+    def validate_submitted_by_role(cls, a: object) -> UserRole:
+        """
+        Ensure the submittedByRole value is a valid UserRole.
+        """
+        if isinstance(a, UserRole):
+            return a
+        try:
+            return UserRole(a)
+        except ValueError:
+            allowed = ", ".join(role.value for role in UserRole)
+            raise ValueError(
+                f"Invalid submittedByRole '{a}'. Must be one of: {allowed}"
+            )
 
     @model_validator(mode="after")
     def validate_recurrence_end_date(self) -> "Booking":
