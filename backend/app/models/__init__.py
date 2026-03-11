@@ -22,7 +22,7 @@ from .booking import (
     TimeSlot,
     TimeslotStatus,
 )
-from .notification import Notification
+from .notification import Notification, NotificationType
 from .room import Room
 from .user import User, UserRole
 
@@ -35,5 +35,6 @@ __all__ = [
     "RecurrenceFrequency",
     "BookingStatus",
     "Booking",
+    "NotificationType",
     "Notification",
 ]

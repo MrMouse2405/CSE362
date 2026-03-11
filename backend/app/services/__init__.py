@@ -18,6 +18,14 @@ from .booking_service import (
     get_pending_bookings,
     submit_booking,
 )
+from .notification_service import (
+    NotificationNotFoundError,
+    NotificationServiceError,
+    get_notifications,
+    get_unread_count,
+    mark_read,
+    send_notification,
+)
 
 __all__ = [
     "BookingServiceError",
@@ -29,4 +37,10 @@ __all__ = [
     "deny_booking",
     "cancel_booking",
     "get_pending_bookings",
+    "NotificationServiceError",
+    "NotificationNotFoundError",
+    "send_notification",
+    "get_notifications",
+    "mark_read",
+    "get_unread_count",
 ]
