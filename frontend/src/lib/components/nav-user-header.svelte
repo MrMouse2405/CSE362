@@ -57,7 +57,7 @@
                 </div>
             </div>
         </DropdownMenu.Label>
-        {#if auth.isSuperuser}
+        {#if auth.isAdmin}
             <DropdownMenu.Separator />
             <DropdownMenu.Group>
                 <DropdownMenu.Item onclick={() => goto("/admin")}>

@@ -8,7 +8,7 @@
     import NavUserHeader from "$lib/components/nav-user-header.svelte";
     import DatePicker from "$lib/components/date-picker.svelte";
     import Calendars from "$lib/components/calendars.svelte";
-    import PlusIcon from "@lucide/svelte/icons/plus";
+
     import {
         PanelLeftIcon,
         BadgeCheckIcon,
@@ -33,12 +33,6 @@
         goto(path);
     }
 
-    const calendars = [
-        { name: "My Calendars", items: ["Personal", "Work", "Family"] },
-        { name: "Favorites", items: ["Holidays", "Birthdays"] },
-        { name: "Other", items: ["Travel", "Reminders", "Deadlines"] },
-    ];
-
     const PAGE_NAMES: Record<string, string> = {
         "/": "Dashboard",
         "/account": "Account",
@@ -49,6 +43,8 @@
     };
 
     function pageName(pathname: string): string {
+        if (pathname.startsWith("/book/")) return "Book Room";
+        if (pathname.startsWith("/bookingdetails/")) return "Booking Details";
         return PAGE_NAMES[pathname] ?? pathname.split("/").pop() ?? "";
     }
 
@@ -89,7 +85,7 @@
             goto("/login");
         } else if (isGuestOnlyPath(currentPath) && auth.isAuthenticated) {
             goto("/");
-        } else if (currentPath.startsWith("/admin") && !auth.isSuperuser) {
+        } else if (currentPath.startsWith("/admin") && !auth.isAdmin) {
             goto("/");
         }
     });
@@ -120,18 +116,9 @@
             <Sidebar.Content>
                 <DatePicker />
                 <Sidebar.Separator class="mx-0" />
-                <Calendars {calendars} />
+                <Calendars />
             </Sidebar.Content>
-            <Sidebar.Footer>
-                <Sidebar.Menu>
-                    <Sidebar.MenuItem>
-                        <Sidebar.MenuButton>
-                            <PlusIcon />
-                            <span>New Calendar</span>
-                        </Sidebar.MenuButton>
-                    </Sidebar.MenuItem>
-                </Sidebar.Menu>
-            </Sidebar.Footer>
+            <Sidebar.Footer />
             <Sidebar.Rail />
         </Sidebar.Root>
         <Sidebar.Inset>

@@ -140,3 +140,37 @@ async def test_get_room_not_found(client: AsyncClient, session: AsyncSession):
 
     response = await client.get("/api/rooms/999")
     assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_get_available_dates_no_auth(client: AsyncClient):
+    response = await client.get("/api/rooms/dates?year=2026&month=3")
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_get_available_dates_with_auth(
+    client: AsyncClient, session: AsyncSession
+):
+    user = await _create_user(session)
+    app.dependency_overrides[current_active_user] = lambda: user
+
+    room = await _create_room(session)
+    assert room.id is not None
+    await _create_slot(session, room.id, date(2026, 3, 10), time(9, 0), time(10, 0))
+    await _create_slot(session, room.id, date(2026, 3, 15), time(9, 0), time(10, 0))
+
+    response = await client.get("/api/rooms/dates?year=2026&month=3")
+    assert response.status_code == 200
+    data = response.json()
+    assert data == ["2026-03-10", "2026-03-15"]
+
+
+@pytest.mark.asyncio
+async def test_get_available_dates_empty(client: AsyncClient, session: AsyncSession):
+    user = await _create_user(session)
+    app.dependency_overrides[current_active_user] = lambda: user
+
+    response = await client.get("/api/rooms/dates?year=2026&month=3")
+    assert response.status_code == 200
+    assert response.json() == []

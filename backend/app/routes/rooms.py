@@ -21,7 +21,11 @@ from app.database import get_session
 from app.models.user import User
 from app.schemas.room import RoomBasicRead, RoomRead
 from app.services.auth import current_active_user
-from app.services.room_service import get_room, get_rooms_with_availability
+from app.services.room_service import (
+    get_available_dates,
+    get_room,
+    get_rooms_with_availability,
+)
 
 router = APIRouter(prefix="/api/rooms", tags=["rooms"])
 
@@ -43,6 +47,22 @@ async def list_rooms(
     Requires a valid authenticated user — unauthenticated requests receive 401.
     """
     return await get_rooms_with_availability(target_date, session)
+
+
+@router.get("/dates", response_model=List[date])
+async def list_available_dates(
+    year: int = Query(...),
+    month: int = Query(..., ge=1, le=12),
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """
+    Return a list of dates in the given year/month that have at least one
+    available time slot across any room.
+
+    Requires a valid authenticated user — unauthenticated requests receive 401.
+    """
+    return await get_available_dates(year, month, session)
 
 
 @router.get("/{id}", response_model=RoomBasicRead)

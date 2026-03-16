@@ -1,28 +1,8 @@
-<script lang="ts" module>
-    const data = {
-        calendars: [
-            {
-                name: "My Calendars",
-                items: ["Personal", "Work", "Family"],
-            },
-            {
-                name: "Favorites",
-                items: ["Holidays", "Birthdays"],
-            },
-            {
-                name: "Other",
-                items: ["Travel", "Reminders", "Deadlines"],
-            },
-        ],
-    };
-</script>
-
 <script lang="ts">
     import Calendars from "./calendars.svelte";
     import DatePicker from "./date-picker.svelte";
     import NavUser from "./nav-user.svelte";
     import * as Sidebar from "$lib/components/ui/sidebar/index.js";
-    import PlusIcon from "@lucide/svelte/icons/plus";
     import type { ComponentProps } from "svelte";
     import { auth } from "$lib/state/auth.svelte";
 
@@ -45,17 +25,8 @@
     <Sidebar.Content>
         <DatePicker />
         <Sidebar.Separator class="mx-0" />
-        <Calendars calendars={data.calendars} />
+        <Calendars />
     </Sidebar.Content>
-    <Sidebar.Footer>
-        <Sidebar.Menu>
-            <Sidebar.MenuItem>
-                <Sidebar.MenuButton>
-                    <PlusIcon />
-                    <span>New Calendar</span>
-                </Sidebar.MenuButton>
-            </Sidebar.MenuItem>
-        </Sidebar.Menu>
-    </Sidebar.Footer>
+    <Sidebar.Footer />
     <Sidebar.Rail />
 </Sidebar.Root>
