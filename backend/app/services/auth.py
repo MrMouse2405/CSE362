@@ -17,25 +17,18 @@ from fastapi_users.authentication import (
     JWTStrategy,
 )
 
+from app.env import get_jwt_secret
 from app.models.user import User, UserRole
 from app.services.user_manager import get_user_manager
 
-_SECRET = os.environ.get("JWT_SECRET", "default_secret")
+_SECRET = os.environ.get("JWT_SECRET", get_jwt_secret())
 
 bearer_transport = BearerTransport(tokenUrl="/api/auth/login")
-
-
-def get_jwt_strategy() -> JWTStrategy:
-    """
-    Provides the configured JWT strategy for issuing and validating tokens.
-    """
-    return JWTStrategy(secret=_SECRET, lifetime_seconds=3600)
-
 
 auth_backend = AuthenticationBackend(
     name="jwt",
     transport=bearer_transport,
-    get_strategy=get_jwt_strategy,
+    get_strategy=lambda: JWTStrategy(secret=_SECRET, lifetime_seconds=3600),
 )
 
 fastapi_users = FastAPIUsers[User, uuid.UUID](
