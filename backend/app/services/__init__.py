@@ -15,7 +15,9 @@ from .booking_service import (
     approve_booking,
     cancel_booking,
     deny_booking,
+    get_all_bookings,
     get_pending_bookings,
+    get_user_bookings,
     submit_booking,
 )
 from .notification_service import (
@@ -36,6 +38,8 @@ __all__ = [
     "approve_booking",
     "deny_booking",
     "cancel_booking",
+    "get_user_bookings",
+    "get_all_bookings",
     "get_pending_bookings",
     "NotificationServiceError",
     "NotificationNotFoundError",
