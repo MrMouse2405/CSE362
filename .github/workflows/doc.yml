@@ -36,6 +36,12 @@ jobs:
 
       - name: Build documentation
         working-directory: backend
+        env:
+          SUPER_USER_NAME: "testadmin"
+          SUPER_USER_EMAIL: "admin@test.com"
+          SUPER_USER_PASSWORD: "testpassword"
+          JWT_SECRET: "ci_test_secret"
+          DATABASE_URL: "sqlite+aiosqlite:///./test.db"
         run: |
           uv run pdoc -o docs/ app
           mv docs/app.html docs/index.html
