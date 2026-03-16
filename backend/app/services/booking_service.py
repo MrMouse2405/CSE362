@@ -234,3 +234,24 @@ def get_pending_bookings(session: Session) -> list[Booking]:
         .options(selectinload(Booking.timeSlots))
     )
     return list(session.exec(statement))
+
+
+def get_user_bookings(user_id, session: Session) -> list[Booking]:
+    statement = (
+        select(Booking)
+        .where(Booking.userID == user_id)
+        .options(selectinload(Booking.timeSlots))
+        .order_by(Booking.createdAt.desc(), Booking.id.desc())
+    )
+    return list(session.exec(statement))
+
+
+def get_all_bookings(
+    session: Session, status: str | BookingStatus | None = None
+) -> list[Booking]:
+    statement = select(Booking).options(selectinload(Booking.timeSlots))
+    if status is not None:
+        statement = statement.where(Booking.status == BookingStatus(status))
+
+    statement = statement.order_by(Booking.createdAt.desc(), Booking.id.desc())
+    return list(session.exec(statement))
