@@ -7,12 +7,10 @@ A room represents a physical space with a specific capacity.
 Traces to: UC-2 | Domain class: Room
 """
 
-from __future__ import annotations
-
-from typing import Optional
+from typing import List, Optional
 
 from sqlalchemy import Column, String
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, Relationship, SQLModel
 
 
 class Room(SQLModel, table=True):
@@ -28,3 +26,5 @@ class Room(SQLModel, table=True):
 
     capacity: int = Field(nullable=False, ge=1)
     """The maximum number of people the room can accommodate. Must be `>= 1`."""
+
+    time_slots: List["TimeSlot"] = Relationship(back_populates="room")  # type: ignore # noqa: F821

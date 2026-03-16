@@ -1,14 +1,13 @@
 import pytest
 import pytest_asyncio
-from fastapi.testclient import TestClient
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlmodel import SQLModel
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+import app.models  # noqa: 401
 from app.database import get_session
 from app.main import app
-from app.models.user import User, UserRole
 
 # Setup in-memory SQLite for testing
 test_engine = create_async_engine(
@@ -164,7 +163,7 @@ async def test_update_user_admin_unauthorized(client: AsyncClient):
     token = login_res.json()["access_token"]
 
     # Attempt to use admin patch
-    target_id = login_res.json().get(
+    _ = login_res.json().get(
         "id"
     )  # Not actually returned on login, but let's just make one up
 
