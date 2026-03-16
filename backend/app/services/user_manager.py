@@ -8,7 +8,7 @@ from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_session
-from app.env import get_super_user_email, get_super_user_password
+from app.env import get_super_user_email, get_super_user_name, get_super_user_password
 from app.models.user import User, UserRole
 from app.schemas.user import UserCreate
 
@@ -46,7 +46,7 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         return await User.admin_update(
             user_id,
             self.user_db.session,  # type: ignore
-            role=role,
+            role=role,  # type: ignore
             is_active=is_active,
         )
 
@@ -62,6 +62,7 @@ async def register_superuser():
     """
     Creates a superuser on startup if one doesn't already exist.
     """
+    name = get_super_user_name()
     email = get_super_user_email()
     password = get_super_user_password()
 
@@ -76,15 +77,16 @@ async def register_superuser():
         if user is None:
             logger.info(f"Creating superuser: {email}")
             user_create = UserCreate(
+                name=name,
                 email=email,
                 password=password,
                 role=UserRole.ADMIN,
             )
             # user_manager.create handles the password hashing
             user = await user_manager.create(user_create)
-            logger.info(f"Superuser created: {user.id}")
+            logger.info(f"Superuser created: {user.name}#{user.id}")
         else:
-            logger.info(f"Superuser already exists: {user.id}")
+            logger.info(f"Superuser already exists: {user.name}#{user.id}")
 
         # Break immediately so we only consume the first yielded session
         break

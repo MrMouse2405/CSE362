@@ -38,6 +38,9 @@ class User(SQLModelBaseUserDB, table=True):
     attributes, and it adds a specific role attribute for access control.
     """
 
+    name: str = Field(default="")
+    """The display name of the user. Defaults to empty string."""
+
     role: UserRole = Field(default=UserRole.STUDENT)
     """The system role of the user (e.g., student, teacher, admin). Defaults to `UserRole.STUDENT`."""
 

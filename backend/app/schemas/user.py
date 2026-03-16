@@ -16,18 +16,21 @@ from app.models.user import UserRole
 class UserRead(schemas.BaseUser[uuid.UUID]):
     """Schema for reading a user's details."""
 
+    name: str
     role: UserRole
 
 
 class UserCreate(schemas.BaseUserCreate):
     """Schema for creating a new user."""
 
+    name: str = ""
     role: UserRole = UserRole.STUDENT
 
 
 class UserUpdate(schemas.BaseUserUpdate):
     """Schema for updating an existing user."""
 
+    name: str | None = None
     role: UserRole | None = None
 
 

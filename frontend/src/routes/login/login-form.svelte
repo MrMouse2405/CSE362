@@ -54,15 +54,7 @@
                     />
                 </Field>
                 <Field>
-                    <div class="flex items-center">
-                        <FieldLabel for="password-{id}">Password</FieldLabel>
-                        <a
-                            href="##"
-                            class="ms-auto inline-block text-sm underline"
-                        >
-                            Forgot your password?
-                        </a>
-                    </div>
+                    <FieldLabel for="password-{id}">Password</FieldLabel>
                     <Input id="password-{id}" type="password" required bind:value={password} />
                 </Field>
                 {#if error}
@@ -73,7 +65,7 @@
                         {loading ? "Logging in..." : "Login"}
                     </Button>
                     <FieldDescription class="text-center">
-                        Don't have an account? <a href="##">Sign up</a>
+                        Don't have an account? <a href="/register" class="underline">Sign up</a>
                     </FieldDescription>
                 </Field>
             </FieldGroup>

@@ -1,0 +1,95 @@
+<script lang="ts">
+    import { BadgeCheckIcon, ShieldUser } from "@lucide/svelte";
+    import { BellIcon } from "@lucide/svelte";
+    import { ChevronsUpDownIcon } from "@lucide/svelte";
+    import { CalendarCheck } from "@lucide/svelte";
+    import { LogOutIcon } from "@lucide/svelte";
+
+    import { goto } from "$app/navigation";
+    import * as Avatar from "$lib/components/ui/avatar/index.js";
+    import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
+    import { Button } from "$lib/components/ui/button/index.js";
+    import { auth } from "$lib/state/auth.svelte";
+
+    let { user }: { user: { name: string; email: string; avatar: string } } =
+        $props();
+</script>
+
+<DropdownMenu.Root>
+    <DropdownMenu.Trigger>
+        {#snippet child({ props })}
+            <Button
+                variant="ghost"
+                size="lg"
+                {...props}
+                class="data-[state=open]:bg-accent gap-2 px-2"
+            >
+                <Avatar.Root class="size-8 rounded-lg">
+                    <Avatar.Image src={user.avatar} alt={user.name} />
+                    <Avatar.Fallback class="rounded-lg">CN</Avatar.Fallback>
+                </Avatar.Root>
+                <div class="grid flex-1 text-start text-sm leading-tight">
+                    <span class="truncate font-medium">{user.name}</span>
+                    <span class="text-muted-foreground truncate text-xs"
+                        >{user.email}</span
+                    >
+                </div>
+                <ChevronsUpDownIcon class="ms-auto size-4" />
+            </Button>
+        {/snippet}
+    </DropdownMenu.Trigger>
+    <DropdownMenu.Content
+        class="min-w-56 rounded-lg"
+        align="start"
+        sideOffset={4}
+    >
+        <DropdownMenu.Label class="p-0 font-normal">
+            <div class="flex items-center gap-2 px-1 py-1.5 text-start text-sm">
+                <Avatar.Root class="size-8 rounded-lg">
+                    <Avatar.Image src={user.avatar} alt={user.name} />
+                    <Avatar.Fallback class="rounded-lg">CN</Avatar.Fallback>
+                </Avatar.Root>
+                <div class="grid flex-1 text-start text-sm leading-tight">
+                    <span class="truncate font-medium">{user.name}</span>
+                    <span class="text-muted-foreground truncate text-xs"
+                        >{user.email}</span
+                    >
+                </div>
+            </div>
+        </DropdownMenu.Label>
+        {#if auth.isSuperuser}
+            <DropdownMenu.Separator />
+            <DropdownMenu.Group>
+                <DropdownMenu.Item onclick={() => goto("/admin")}>
+                    <ShieldUser />
+                    Admin Panel
+                </DropdownMenu.Item>
+            </DropdownMenu.Group>
+        {/if}
+        <DropdownMenu.Separator />
+        <DropdownMenu.Group>
+            <DropdownMenu.Item onclick={() => goto("/account")}>
+                <BadgeCheckIcon />
+                Account
+            </DropdownMenu.Item>
+            <DropdownMenu.Item onclick={() => goto("/bookings")}>
+                <CalendarCheck />
+                Booked Rooms
+            </DropdownMenu.Item>
+            <DropdownMenu.Item onclick={() => goto("/notifications")}>
+                <BellIcon />
+                Notifications
+            </DropdownMenu.Item>
+        </DropdownMenu.Group>
+        <DropdownMenu.Separator />
+        <DropdownMenu.Item
+            class="justify-start gap-2 text-red-500 hover:text-red-600"
+            onclick={() => goto("/logout")}
+        >
+            <LogOutIcon
+                class="justify-start gap-2 text-red-500 hover:text-red-600"
+            />
+            Log out
+        </DropdownMenu.Item>
+    </DropdownMenu.Content>
+</DropdownMenu.Root>

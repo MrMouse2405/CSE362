@@ -8,9 +8,11 @@ Combines auto-generated routers from `fastapi-users` with custom admin routes.
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import Response
 
 from app.models.user import User
 from app.schemas.user import AdminUserUpdate, UserCreate, UserRead
+from app.services import avatar_service
 from app.services.auth import (
     auth_backend,
     current_active_user,
@@ -57,3 +59,19 @@ async def update_user_admin(
         )
 
     return target_user
+
+
+@router.get("/avatar")
+async def get_avatar(user: User = Depends(current_active_user)):
+    """
+    Returns a deterministic SVG avatar for the given user ID.
+
+    The image is generated on the fly but is identical for the same user_id,
+    so it can be aggressively cached by the browser.
+    """
+    svg = avatar_service.generate(seed=str(user.id))
+    return Response(
+        content=svg,
+        media_type="image/svg+xml",
+        headers={"Cache-Control": "public, max-age=31536000, immutable"},
+    )
