@@ -16,6 +16,7 @@ from starlette.responses import FileResponse
 import app.models  # noqa: F401 - ensures all models are registered with SQLModel metadata
 from app.database import engine
 from app.routes.auth import router as auth_router
+from app.routes.rooms import router as rooms_router
 from app.routes.bookings import router as bookings_router
 from app.routes.notifications import router as notifications_router
 from app.services.user_manager import register_superuser
@@ -32,6 +33,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 app.include_router(auth_router)
+app.include_router(rooms_router)
 app.include_router(bookings_router)
 app.include_router(notifications_router)
 
