@@ -149,6 +149,8 @@ class TimeSlot(SQLModel, table=True):
     booking: Optional["Booking"] = Relationship(back_populates="timeSlots")  # noqa: F821
     """The Booking this timeslot belongs to, if any."""
 
+    room: Optional["Room"] = Relationship(back_populates="time_slots")  # noqa: F821
+
     def hold(self):
         """
         Temporarily reserve the room timeslot.
