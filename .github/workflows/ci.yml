@@ -29,6 +29,12 @@ jobs:
           echo "<html><body>Mock Svelte Build</body></html>" > backend/app/static/index.html
 
       - name: Run Pytest
+        env:
+          SUPER_USER_NAME: "testadmin"
+          SUPER_USER_EMAIL: "admin@test.com"
+          SUPER_USER_PASSWORD: "testpassword"
+          JWT_SECRET: "ci_test_secret"
+          DATABASE_URL: "sqlite+aiosqlite:///./test.db"
         run: |
           cd backend
           uv run pytest

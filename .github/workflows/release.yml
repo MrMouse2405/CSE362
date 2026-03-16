@@ -32,9 +32,14 @@ jobs:
 
       # --- Protect the release by running tests ---
       - name: Run Backend Tests
+        env:
+          SUPER_USER_NAME: "testadmin"
+          SUPER_USER_EMAIL: "admin@test.com"
+          SUPER_USER_PASSWORD: "testpassword"
+          JWT_SECRET: "ci_test_secret"
+          DATABASE_URL: "sqlite+aiosqlite:///./test.db"
         run: |
           cd backend
-          # uv run automatically resolves the environment and runs pytest
           uv run pytest
       # ------------------------------------------------------
 

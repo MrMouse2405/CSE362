@@ -15,6 +15,7 @@ dependencies = [
     "pdoc>=16.0.0",
     "dotenv>=0.9.9",
     "loguru>=0.7.3",
+    "multiavatar>=1.0.3",
 ]
 
 [dependency-groups]

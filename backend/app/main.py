@@ -19,6 +19,7 @@ from app.routes.auth import router as auth_router
 from app.routes.rooms import router as rooms_router
 from app.routes.bookings import router as bookings_router
 from app.routes.notifications import router as notifications_router
+from app.seed import seed_rooms_and_slots
 from app.services.user_manager import register_superuser
 
 
@@ -27,6 +28,7 @@ async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
     await register_superuser()
+    await seed_rooms_and_slots()
     yield
 
 

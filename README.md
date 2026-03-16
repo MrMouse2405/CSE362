@@ -19,8 +19,9 @@ pip install -r requirements.txt
 Set Environment Variables
 
 ```env
-SUPER_USER_EMAIL="mrmouse2405@gmail.com"
-SUPER_USER_PASSWORD="meowmeow"
+SUPER_USER_NAME=""
+SUPER_USER_EMAIL=""
+SUPER_USER_PASSWORD=""
 JWT_SECRET="default_secret"
 DATABASE_URL="sqlite+aiosqlite:///./app.db"
 ```

@@ -1,9 +1,34 @@
-import { auth } from "$lib/state/auth.svelte";
+/**
+ * API fetch helper.
+ *
+ * Provides a thin wrapper around `fetch` that:
+ *  - Attaches the Bearer token (supplied via `setTokenGetter`)
+ *  - Parses JSON responses
+ *  - Normalises error handling
+ *  - Calls an optional `onUnauthorized` hook on 401 responses so the auth
+ *    layer can clear state without creating a circular import.
+ */
 
-export async function apiFetch(path: string, options: RequestInit = {}) {
+let getToken: (() => string | null) | null = null;
+let onUnauthorized: (() => void) | null = null;
+
+export function setTokenGetter(fn: () => string | null) {
+  getToken = fn;
+}
+
+export function setOnUnauthorized(fn: () => void) {
+  onUnauthorized = fn;
+}
+
+export async function apiFetch<T = unknown>(
+  path: string,
+  options: RequestInit = {},
+): Promise<T> {
   const headers = new Headers(options.headers);
-  if (auth.token) {
-    headers.set("Authorization", `Bearer ${auth.token}`);
+
+  const token = getToken?.();
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
   }
 
   const response = await fetch(path, {
@@ -11,12 +36,16 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
     headers,
   });
 
+  if (response.status === 401) {
+    onUnauthorized?.();
+  }
+
   if (!response.ok) {
     let errorDetail = "API request failed";
     try {
       const errorData = await response.json();
       errorDetail = errorData.detail || errorDetail;
-    } catch (e) {
+    } catch {
       // Ignore JSON parse error
     }
     throw new Error(
@@ -29,8 +58,8 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
   // Check if the response has content before parsing JSON
   const contentType = response.headers.get("content-type");
   if (contentType && contentType.includes("application/json")) {
-    return response.json();
+    return response.json() as Promise<T>;
   }
 
-  return null;
+  return null as T;
 }

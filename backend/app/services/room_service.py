@@ -7,12 +7,12 @@ from datetime import date
 from typing import List
 
 from fastapi import HTTPException
-from sqlalchemy import and_
+from sqlalchemy import and_, extract, func
 from sqlalchemy.orm import contains_eager
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.models.booking import TimeSlot
+from app.models.booking import TimeSlot, TimeslotStatus
 from app.models.room import Room
 
 
@@ -35,6 +35,27 @@ async def get_rooms_with_availability(
     )
     result = await session.exec(stmt)
     return list(result.unique().all())
+
+
+async def get_available_dates(
+    year: int, month: int, session: AsyncSession
+) -> List[date]:
+    """
+    Return a sorted list of distinct dates within the given year/month
+    that have at least one AVAILABLE time slot.
+    """
+    stmt = (
+        select(TimeSlot.slot_date)  # type: ignore
+        .where(
+            extract("year", TimeSlot.slot_date) == year,  # type: ignore
+            extract("month", TimeSlot.slot_date) == month,  # type: ignore
+            TimeSlot.status == TimeslotStatus.AVAILABLE,
+        )
+        .distinct()
+        .order_by(TimeSlot.slot_date)
+    )
+    result = await session.exec(stmt)
+    return list(result.all())
 
 
 async def get_room(room_id: int, session: AsyncSession) -> Room:

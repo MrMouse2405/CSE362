@@ -9,7 +9,11 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models.booking import TimeSlot, TimeslotStatus
 from app.models.room import Room
-from app.services.room_service import get_room, get_rooms_with_availability
+from app.services.room_service import (
+    get_available_dates,
+    get_room,
+    get_rooms_with_availability,
+)
 
 
 @pytest.fixture
@@ -130,3 +134,60 @@ async def test_get_room_raises_not_found(session: AsyncSession):
         await get_room(999, session)
 
     assert exc.value.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_get_available_dates_returns_dates_with_slots(session: AsyncSession):
+    room = await _create_room(session)
+    assert room.id is not None
+    session.expunge(room)
+
+    await _create_slot(session, room.id, date(2026, 3, 10), time(9, 0), time(10, 0))
+    await _create_slot(session, room.id, date(2026, 3, 15), time(9, 0), time(10, 0))
+    # Different month — should not appear
+    await _create_slot(session, room.id, date(2026, 4, 1), time(9, 0), time(10, 0))
+
+    dates = await get_available_dates(2026, 3, session)
+
+    assert dates == [date(2026, 3, 10), date(2026, 3, 15)]
+
+
+@pytest.mark.asyncio
+async def test_get_available_dates_excludes_booked_slots(session: AsyncSession):
+    room = await _create_room(session)
+    assert room.id is not None
+    session.expunge(room)
+
+    # One available, one booked on same day
+    await _create_slot(session, room.id, date(2026, 3, 10), time(9, 0), time(10, 0))
+    await _create_slot(
+        session,
+        room.id,
+        date(2026, 3, 10),
+        time(10, 0),
+        time(11, 0),
+        status=TimeslotStatus.BOOKED,
+    )
+    # Day with only booked slots
+    await _create_slot(
+        session,
+        room.id,
+        date(2026, 3, 11),
+        time(9, 0),
+        time(10, 0),
+        status=TimeslotStatus.BOOKED,
+    )
+
+    dates = await get_available_dates(2026, 3, session)
+
+    # March 10 has one available slot so it should appear; March 11 should not
+    assert dates == [date(2026, 3, 10)]
+
+
+@pytest.mark.asyncio
+async def test_get_available_dates_returns_empty_if_none(session: AsyncSession):
+    _ = await _create_room(session)
+
+    dates = await get_available_dates(2026, 3, session)
+
+    assert dates == []
