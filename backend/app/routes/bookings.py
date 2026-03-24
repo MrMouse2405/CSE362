@@ -16,21 +16,18 @@ from pydantic import BaseModel, ConfigDict
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.database import get_session
-from app.models import Booking, BookingStatus, NotificationType, RecurrenceFrequency, User
+from app.models import Booking, BookingStatus, RecurrenceFrequency, User
 from app.services.auth import current_active_user, require_admin
 from app.services.booking_service import (
     BookingConflictError,
     BookingNotFoundError,
     BookingServiceError,
     BookingStateError,
-    approve_booking,
-    cancel_booking,
-    deny_booking,
     get_all_bookings,
     get_user_bookings,
+    process_booking_action,
     submit_booking,
 )
-from app.services.notification_service import send_notification
 
 router = APIRouter(prefix="/api/bookings", tags=["bookings"])
 
@@ -134,29 +131,10 @@ async def update_booking(
     session: AsyncSession = Depends(get_session),
 ):
     del admin_user
-    action_to_service = {
-        "approve": approve_booking,
-        "deny": deny_booking,
-        "cancel": cancel_booking,
-    }
-    action_to_notification = {
-        "approve": NotificationType.APPROVED,
-        "deny": NotificationType.DENIED,
-        "cancel": NotificationType.CANCELLED,
-    }
-
     try:
         booking = await session.run_sync(
-            lambda sync_session: action_to_service[booking_update.action](
-                booking_id, sync_session
-            )
-        )
-        await session.run_sync(
-            lambda sync_session: send_notification(
-                booking.userID,
-                booking.id,
-                action_to_notification[booking_update.action],
-                sync_session,
+            lambda sync_session: process_booking_action(
+                booking_id, booking_update.action, sync_session
             )
         )
     except Exception as exc:
