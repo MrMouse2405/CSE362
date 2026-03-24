@@ -1,7 +1,6 @@
 from datetime import date, time
 
 import pytest
-from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.pool import StaticPool
 from sqlmodel import SQLModel
@@ -10,6 +9,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.models.booking import TimeSlot, TimeslotStatus
 from app.models.room import Room
 from app.services.room_service import (
+    RoomNotFoundError,
     get_available_dates,
     get_room,
     get_rooms_with_availability,
@@ -130,10 +130,8 @@ async def test_get_room_returns_room_by_id(session: AsyncSession):
 
 @pytest.mark.asyncio
 async def test_get_room_raises_not_found(session: AsyncSession):
-    with pytest.raises(HTTPException) as exc:
+    with pytest.raises(RoomNotFoundError, match="not found"):
         await get_room(999, session)
-
-    assert exc.value.status_code == 404
 
 
 @pytest.mark.asyncio
