@@ -51,6 +51,14 @@ def get_notifications(user_id, session: Session) -> list[Notification]:
     )
     return list(session.exec(statement))
 
+def get_notification_for_user(notification_id: int, user_id, session: Session) -> Notification:
+    notification = session.get(Notification, notification_id)
+    if notification is None or notification.userID != user_id:
+        raise NotificationNotFoundError(
+            f"Notification {notification_id} was not found."
+        )
+    return notification
+
 
 def mark_read(notification_id: int, session: Session) -> Notification:
     notification = session.get(Notification, notification_id)

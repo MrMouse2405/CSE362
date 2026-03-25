@@ -9,11 +9,9 @@ Traces to: UC-1, UC-5 | Domain class: User
 """
 
 import enum
-import uuid
 
 from fastapi_users_db_sqlmodel import SQLModelBaseUserDB
 from pydantic import field_validator
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import Field
 
 
@@ -58,27 +56,3 @@ class User(SQLModelBaseUserDB, table=True):
             allowed = ", ".join(r.value for r in UserRole)
             raise ValueError(f"Invalid role '{v}'. Must be one of: {allowed}")
 
-    @classmethod
-    async def admin_update(
-        cls,
-        user_id: uuid.UUID,
-        session: AsyncSession,
-        role: UserRole | None = None,
-        is_active: bool | None = None,
-    ) -> "User | None":
-        """
-        Updates a user's role or active status.
-        """
-        user = await session.get(cls, user_id)
-        if not user:
-            return None
-
-        if role is not None:
-            user.role = role
-        if is_active is not None:
-            user.is_active = is_active
-
-        session.add(user)
-        await session.commit()
-        await session.refresh(user)
-        return user

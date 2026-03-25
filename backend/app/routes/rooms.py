@@ -14,7 +14,7 @@ Traces to: UC-2
 from datetime import date
 from typing import List
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.database import get_session
@@ -22,6 +22,7 @@ from app.models.user import User
 from app.schemas.room import RoomBasicRead, RoomRead
 from app.services.auth import current_active_user
 from app.services.room_service import (
+    RoomNotFoundError,
     get_available_dates,
     get_room,
     get_rooms_with_availability,
@@ -77,4 +78,9 @@ async def retrieve_room(
     Raises a 404 HTTP error if no room with the given ``id`` exists.
     Requires a valid authenticated user — unauthenticated requests receive 401.
     """
-    return await get_room(id, session)
+    try:
+        return await get_room(id, session)
+    except RoomNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
+        ) from exc

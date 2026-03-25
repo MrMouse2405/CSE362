@@ -14,11 +14,13 @@ from sqlmodel import Session, select
 from app.models import (
     Booking,
     BookingStatus,
+    NotificationType,
     RecurrenceFrequency,
     TimeSlot,
     TimeslotStatus,
     User,
 )
+from app.services.notification_service import send_notification
 
 
 class BookingServiceError(ValueError):
@@ -255,3 +257,17 @@ def get_all_bookings(
 
     statement = statement.order_by(Booking.createdAt.desc(), Booking.id.desc())
     return list(session.exec(statement))
+
+_ACTION_MAP: dict[str, tuple] = {
+    "approve": (approve_booking, NotificationType.APPROVED),
+    "deny": (deny_booking, NotificationType.DENIED),
+    "cancel": (cancel_booking, NotificationType.CANCELLED),
+}
+
+
+def process_booking_action(booking_id: int, action: str, session: Session) -> Booking:
+    """Execute a booking lifecycle action and send the corresponding notification."""
+    action_fn, notification_type = _ACTION_MAP[action]
+    booking = action_fn(booking_id, session)
+    send_notification(booking.userID, booking.id, notification_type, session)
+    return booking
