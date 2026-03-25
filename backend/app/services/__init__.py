@@ -18,15 +18,22 @@ from .booking_service import (
     get_all_bookings,
     get_pending_bookings,
     get_user_bookings,
+    process_booking_action,
     submit_booking,
 )
 from .notification_service import (
     NotificationNotFoundError,
     NotificationServiceError,
+    get_notification_for_user,
     get_notifications,
     get_unread_count,
     mark_read,
     send_notification,
+)
+
+from .room_service import (
+    RoomNotFoundError,
+    RoomServiceError,
 )
 
 __all__ = [
@@ -41,10 +48,14 @@ __all__ = [
     "get_user_bookings",
     "get_all_bookings",
     "get_pending_bookings",
+    "process_booking_action",
     "NotificationServiceError",
     "NotificationNotFoundError",
+    "RoomServiceError",
+    "RoomNotFoundError",
     "send_notification",
     "get_notifications",
+    "get_notification_for_user",
     "mark_read",
     "get_unread_count",
 ]

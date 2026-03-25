@@ -6,14 +6,21 @@ This module provides services for retrieving room information and availability.
 from datetime import date
 from typing import List
 
-from fastapi import HTTPException
-from sqlalchemy import and_, extract, func
+from sqlalchemy import and_, extract
 from sqlalchemy.orm import contains_eager
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models.booking import TimeSlot, TimeslotStatus
 from app.models.room import Room
+
+
+class RoomServiceError(ValueError):
+    """Base room service error."""
+
+
+class RoomNotFoundError(RoomServiceError):
+    """Raised when a room cannot be found."""
 
 
 async def get_rooms_with_availability(
@@ -59,11 +66,7 @@ async def get_available_dates(
 
 
 async def get_room(room_id: int, session: AsyncSession) -> Room:
-    """
-    Return a single Room by its primary key, or raise an appropriate error
-    (e.g. HTTPException 404) if no room with that ID exists.
-    """
     room = await session.get(Room, room_id)
     if not room:
-        raise HTTPException(status_code=404, detail=f"Room with ID {room_id} not found")
+        raise RoomNotFoundError(f"Room with ID {room_id} not found")
     return room

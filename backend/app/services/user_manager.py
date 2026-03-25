@@ -42,13 +42,20 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         """
         Admin-only service function to update a user's role or deactivate their account.
         """
-        # Session is securely scoped inside user_db
-        return await User.admin_update(
-            user_id,
-            self.user_db.session,  # type: ignore
-            role=role,  # type: ignore
-            is_active=is_active,
-        )
+        session = self.user_db.session  # type: ignore
+        user = await session.get(User, user_id)
+        if not user:
+            return None
+
+        if role is not None:
+            user.role = role
+        if is_active is not None:
+            user.is_active = is_active
+
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
+        return user
 
 
 async def get_user_manager(user_db: SQLModelUserDatabaseAsync = Depends(get_user_db)):
