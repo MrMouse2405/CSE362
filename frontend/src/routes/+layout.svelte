@@ -35,6 +35,7 @@
 
     const PAGE_NAMES: Record<string, string> = {
         "/": "Dashboard",
+        "/portal": "Booking Portal",
         "/account": "Account",
         "/bookings": "Bookings",
         "/notifications": "Notifications",
@@ -85,8 +86,10 @@
             goto("/login");
         } else if (isGuestOnlyPath(currentPath) && auth.isAuthenticated) {
             goto("/");
-        } else if (currentPath.startsWith("/admin") && !auth.isAdmin) {
-            goto("/");
+        }
+
+        if (currentPath.startsWith("/admin") && !auth.isAdmin) {
+            goto("/portal");
         }
     });
 </script>
@@ -184,6 +187,14 @@
                     </Button>
                     <Separator class="my-1" />
                 {/if}
+                <Button
+                    variant="ghost"
+                    class="justify-start gap-2"
+                    onclick={() => mobileNav("/portal")}
+                >
+                    <CalendarCheck class="size-4" />
+                    Booking Portal
+                </Button>
                 <Button
                     variant="ghost"
                     class="justify-start gap-2"

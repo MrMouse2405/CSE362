@@ -9,6 +9,7 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import Response
+from sqlmodel import select
 
 from app.models.user import User
 from app.schemas.user import AdminUserUpdate, UserCreate, UserRead
@@ -36,6 +37,21 @@ async def get_me(user: User = Depends(current_active_user)):
     Returns the current authenticated user's profile based on their token.
     """
     return user
+
+
+@router.get("/users", response_model=list[UserRead])
+async def list_users(
+    admin_user: User = Depends(require_admin),
+    user_manager: UserManager = Depends(get_user_manager),
+):
+    """
+    Admin-only route to list all users.
+    """
+    del admin_user
+    session = user_manager.user_db.session  # type: ignore
+    statement = select(User)
+    results = await session.execute(statement)
+    return results.scalars().all()
 
 
 @router.patch("/users/{id}", response_model=UserRead)
