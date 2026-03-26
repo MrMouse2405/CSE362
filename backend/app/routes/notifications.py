@@ -8,14 +8,16 @@ unread badge count, and marking a notification as read.
 from __future__ import annotations
 
 from datetime import datetime
+from typing import cast
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict
+from sqlmodel import Session
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.database import get_session
-from app.models import User
+from app.models import Notification, User
 from app.services.auth import current_active_user
 from app.services.notification_service import (
     NotificationNotFoundError,
@@ -43,13 +45,25 @@ class UnreadCountRead(BaseModel):
     count: int
 
 
+def _to_notif(notification: Notification) -> NotificationRead:
+    """Convert an ORM Notification to a Pydantic model inside the sync context."""
+    return NotificationRead.model_validate(notification)
+
+
+def _to_notif_list(notifications: list[Notification]) -> list[NotificationRead]:
+    return [_to_notif(n) for n in notifications]
+
 
 @router.get("", response_model=list[NotificationRead])
 async def list_notifications(
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_session),
 ):
-    return await session.run_sync(lambda sync_session: get_notifications(user.id, sync_session))
+    return await session.run_sync(
+        lambda sync_session: _to_notif_list(
+            get_notifications(user.id, cast(Session, sync_session))
+        )
+    )
 
 
 @router.get("/unread-count", response_model=UnreadCountRead)
@@ -57,7 +71,9 @@ async def unread_count(
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_session),
 ):
-    count = await session.run_sync(lambda sync_session: get_unread_count(user.id, sync_session))
+    count = await session.run_sync(
+        lambda sync_session: get_unread_count(user.id, cast(Session, sync_session))
+    )
     return UnreadCountRead(count=count)
 
 
@@ -70,11 +86,13 @@ async def read_notification(
     try:
         await session.run_sync(
             lambda sync_session: get_notification_for_user(
-                notification_id, user.id, sync_session
+                notification_id, user.id, cast(Session, sync_session)
             )
         )
         return await session.run_sync(
-            lambda sync_session: mark_read(notification_id, sync_session)
+            lambda sync_session: _to_notif(
+                mark_read(notification_id, cast(Session, sync_session))
+            )
         )
     except NotificationNotFoundError as exc:
         raise HTTPException(

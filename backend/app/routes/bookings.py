@@ -8,11 +8,12 @@ and administering booking lifecycle transitions.
 from __future__ import annotations
 
 from datetime import date, datetime, time
-from typing import Literal
+from typing import Literal, cast
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from pydantic import BaseModel, ConfigDict
+from sqlmodel import Session
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.database import get_session
@@ -70,6 +71,15 @@ class BookingActionUpdate(BaseModel):
     action: Literal["approve", "deny", "cancel"]
 
 
+def _to_read(booking: Booking) -> BookingRead:
+    """Convert an ORM Booking to a Pydantic model inside the sync context."""
+    return BookingRead.model_validate(booking)
+
+
+def _to_read_list(bookings: list[Booking]) -> list[BookingRead]:
+    return [_to_read(b) for b in bookings]
+
+
 def _translate_booking_error(exc: Exception) -> HTTPException:
     if isinstance(exc, BookingConflictError):
         return HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc))
@@ -89,13 +99,15 @@ async def create_booking(
 ):
     try:
         booking = await session.run_sync(
-            lambda sync_session: submit_booking(
-                user=user,
-                room_id=booking_in.room_id,
-                slot_ids=booking_in.slot_ids,
-                recurrence_freq=booking_in.recurrence_freq,
-                recurrence_end_date=booking_in.recurrence_end_date,
-                session=sync_session,
+            lambda sync_session: _to_read(
+                submit_booking(
+                    user=user,
+                    room_id=booking_in.room_id,
+                    slot_ids=booking_in.slot_ids,
+                    recurrence_freq=booking_in.recurrence_freq,
+                    recurrence_end_date=booking_in.recurrence_end_date,
+                    session=cast(Session, sync_session),
+                )
             )
         )
     except Exception as exc:
@@ -114,10 +126,14 @@ async def list_bookings(
     try:
         if user.role == "admin":
             return await session.run_sync(
-                lambda sync_session: get_all_bookings(sync_session, status_filter)
+                lambda sync_session: _to_read_list(
+                    get_all_bookings(cast(Session, sync_session), status_filter)
+                )
             )
         return await session.run_sync(
-            lambda sync_session: get_user_bookings(user.id, sync_session)
+            lambda sync_session: _to_read_list(
+                get_user_bookings(user.id, cast(Session, sync_session))
+            )
         )
     except Exception as exc:
         raise _translate_booking_error(exc) from exc
@@ -132,9 +148,10 @@ async def update_booking(
 ):
     del admin_user
     try:
+        action = booking_update.action
         booking = await session.run_sync(
-            lambda sync_session: process_booking_action(
-                booking_id, booking_update.action, sync_session
+            lambda sync_session, _bid=booking_id, _action=action: _to_read(
+                process_booking_action(_bid, _action, cast(Session, sync_session))
             )
         )
     except Exception as exc:
