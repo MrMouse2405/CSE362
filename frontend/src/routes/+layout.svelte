@@ -1,6 +1,9 @@
 <script lang="ts">
     import "./layout.css";
     import { ModeWatcher } from "mode-watcher";
+    import { onMount } from "svelte";
+    import { Toaster, toast } from "svelte-sonner";
+    import { apiFetch } from "$lib/api";
     import { goto, beforeNavigate } from "$app/navigation";
     import { page } from "$app/state";
     import { auth } from "$lib/state/auth.svelte";
@@ -42,6 +45,37 @@
         "/admin": "Admin Panel",
         "/test": "Test",
     };
+
+    // Notification polling state
+    let displayedNotifications = new Set<number>();
+
+    onMount(() => {
+        const interval = setInterval(async () => {
+            if (!auth.isAuthenticated || auth.isLoading) return;
+
+            try {
+                const recent = await apiFetch<any[]>(
+                    "/api/notifications/recent",
+                );
+                for (const n of recent) {
+                    if (!displayedNotifications.has(n.id)) {
+                        toast(n.message, {
+                            description: new Date(n.createdAt).toLocaleString(),
+                            action: {
+                                label: "View",
+                                onClick: () => goto("/notifications"),
+                            },
+                        });
+                        displayedNotifications.add(n.id);
+                    }
+                }
+            } catch (err) {
+                // Silently ignore polling errors
+            }
+        }, 5000);
+
+        return () => clearInterval(interval);
+    });
 
     function pageName(pathname: string): string {
         if (pathname.startsWith("/book/")) return "Book Room";
@@ -95,6 +129,7 @@
 </script>
 
 <ModeWatcher />
+<Toaster position="top-right" closeButton richColors />
 <svelte:head></svelte:head>
 
 {#if auth.isLoading}

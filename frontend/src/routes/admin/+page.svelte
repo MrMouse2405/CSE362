@@ -18,6 +18,9 @@
         CalendarClock,
         AlertCircle,
         CheckCircle2,
+        Users,
+        Plus,
+        Trash2,
     } from "@lucide/svelte";
     import { goto } from "$app/navigation";
 
@@ -61,6 +64,19 @@
     let userDialogOpen = $state(false);
     let newRole = $state<string>("");
     let newActive = $state<boolean>(true);
+
+    // Full-screen User Management state
+    let manageUsersDialogOpen = $state(false);
+    let addUserDialogOpen = $state(false);
+    let newUser = $state({
+        name: "",
+        email: "",
+        password: "",
+        role: "student" as "student" | "teacher" | "admin",
+    });
+
+    let userToDelete = $state<User | null>(null);
+    let deleteConfirmDialogOpen = $state(false);
 
     const roles = [
         { value: "student", label: "Student" },
@@ -161,6 +177,45 @@
         }
     }
 
+    async function handleAddUser() {
+        try {
+            const created = await apiFetch<User>("/api/auth/users", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(newUser),
+            });
+            users = [...users, created];
+            successMessage = `User ${created.email} created successfully.`;
+            addUserDialogOpen = false;
+            newUser = { name: "", email: "", password: "", role: "student" };
+            setTimeout(() => (successMessage = ""), 3000);
+        } catch (e) {
+            error = e instanceof Error ? e.message : "Failed to create user.";
+        }
+    }
+
+    function openDeleteConfirm(user: User) {
+        userToDelete = user;
+        deleteConfirmDialogOpen = true;
+    }
+
+    async function confirmDeleteUser() {
+        if (!userToDelete) return;
+        try {
+            await apiFetch(`/api/auth/users/${userToDelete.id}`, {
+                method: "DELETE",
+            });
+            users = users.filter((u) => u.id !== userToDelete?.id);
+            successMessage = `User ${userToDelete.email} deleted successfully.`;
+            setTimeout(() => (successMessage = ""), 3000);
+        } catch (e) {
+            error = e instanceof Error ? e.message : "Failed to delete user.";
+        } finally {
+            deleteConfirmDialogOpen = false;
+            userToDelete = null;
+        }
+    }
+
     function formatDate(dateStr: string) {
         return new Date(dateStr).toLocaleDateString();
     }
@@ -180,6 +235,13 @@
                 Manage booking requests and user permissions.
             </p>
         </div>
+        <Button
+            variant="default"
+            onclick={() => (manageUsersDialogOpen = true)}
+        >
+            <Users class="mr-2 size-4" />
+            Manage Users
+        </Button>
     </div>
 
     <Separator />
@@ -448,6 +510,163 @@
                 >Cancel</Button
             >
             <Button onclick={saveUserChanges}>Save Changes</Button>
+        </Dialog.Footer>
+    </Dialog.Content>
+</Dialog.Root>
+
+<!-- Full User Management Dialog -->
+<Dialog.Root bind:open={manageUsersDialogOpen}>
+    <Dialog.Content class="max-w-[90vw] max-h-[90vh] overflow-y-auto">
+        <Dialog.Header class="flex flex-row items-center justify-between">
+            <div>
+                <Dialog.Title>User Management</Dialog.Title>
+                <Dialog.Description>
+                    List, add, and delete users from the system.
+                </Dialog.Description>
+            </div>
+            <Button size="sm" onclick={() => (addUserDialogOpen = true)}>
+                <Plus class="mr-2 size-4" />
+                Add New User
+            </Button>
+        </Dialog.Header>
+
+        <div class="mt-4">
+            <Table.Root>
+                <Table.Header>
+                    <Table.Row>
+                        <Table.Head>Name</Table.Head>
+                        <Table.Head>Email</Table.Head>
+                        <Table.Head>Role</Table.Head>
+                        <Table.Head>Status</Table.Head>
+                        <Table.Head class="text-right">Actions</Table.Head>
+                    </Table.Row>
+                </Table.Header>
+                <Table.Body>
+                    {#each users as user (user.id)}
+                        <Table.Row>
+                            <Table.Cell>{user.name}</Table.Cell>
+                            <Table.Cell>{user.email}</Table.Cell>
+                            <Table.Cell>
+                                <Badge variant="outline" class="capitalize"
+                                    >{user.role}</Badge
+                                >
+                            </Table.Cell>
+                            <Table.Cell>
+                                <Badge
+                                    variant={user.is_active
+                                        ? "default"
+                                        : "destructive"}
+                                >
+                                    {user.is_active ? "Active" : "Inactive"}
+                                </Badge>
+                            </Table.Cell>
+                            <Table.Cell class="text-right">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    class="text-red-600 hover:bg-red-50 hover:text-red-700"
+                                    onclick={() => openDeleteConfirm(user)}
+                                >
+                                    <Trash2 class="size-4" />
+                                </Button>
+                            </Table.Cell>
+                        </Table.Row>
+                    {/each}
+                </Table.Body>
+            </Table.Root>
+        </div>
+    </Dialog.Content>
+</Dialog.Root>
+
+<!-- Add User Dialog -->
+<Dialog.Root bind:open={addUserDialogOpen}>
+    <Dialog.Content>
+        <Dialog.Header>
+            <Dialog.Title>Add New User</Dialog.Title>
+            <Dialog.Description>
+                Create a new user account. Credentials should be shared
+                manually.
+            </Dialog.Description>
+        </Dialog.Header>
+        <div class="grid gap-4 py-4">
+            <div class="grid gap-2">
+                <Label for="new-username">Username</Label>
+                <input
+                    id="new-username"
+                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    bind:value={newUser.name}
+                    placeholder="johndoe"
+                />
+            </div>
+            <div class="grid gap-2">
+                <Label for="new-email">Email</Label>
+                <input
+                    id="new-email"
+                    type="email"
+                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    bind:value={newUser.email}
+                    placeholder="john@example.com"
+                />
+            </div>
+            <div class="grid gap-2">
+                <Label for="new-password">Password</Label>
+                <input
+                    id="new-password"
+                    type="password"
+                    class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    bind:value={newUser.password}
+                    placeholder="••••••••"
+                />
+            </div>
+            <div class="grid gap-2">
+                <Label for="new-role">Role</Label>
+                <Select.Root
+                    type="single"
+                    bind:value={newUser.role}
+                    onValueChange={(v) =>
+                        (newUser.role = v as "student" | "teacher" | "admin")}
+                >
+                    <Select.Trigger class="w-full capitalize">
+                        {newUser.role}
+                    </Select.Trigger>
+                    <Select.Content>
+                        {#each roles as role}
+                            <Select.Item value={role.value} label={role.label}
+                                >{role.label}</Select.Item
+                            >
+                        {/each}
+                    </Select.Content>
+                </Select.Root>
+            </div>
+        </div>
+        <Dialog.Footer>
+            <Button
+                variant="outline"
+                onclick={() => (addUserDialogOpen = false)}>Cancel</Button
+            >
+            <Button onclick={handleAddUser}>Create User</Button>
+        </Dialog.Footer>
+    </Dialog.Content>
+</Dialog.Root>
+
+<!-- Delete Confirmation Dialog -->
+<Dialog.Root bind:open={deleteConfirmDialogOpen}>
+    <Dialog.Content>
+        <Dialog.Header>
+            <Dialog.Title>Confirm Deletion</Dialog.Title>
+            <Dialog.Description>
+                Are you sure you want to delete user {userToDelete?.email}? This
+                action cannot be undone.
+            </Dialog.Description>
+        </Dialog.Header>
+        <Dialog.Footer>
+            <Button
+                variant="outline"
+                onclick={() => (deleteConfirmDialogOpen = false)}>Cancel</Button
+            >
+            <Button variant="destructive" onclick={confirmDeleteUser}
+                >Delete User</Button
+            >
         </Dialog.Footer>
     </Dialog.Content>
 </Dialog.Root>

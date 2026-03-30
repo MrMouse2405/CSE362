@@ -124,15 +124,19 @@ async def list_bookings(
     session: AsyncSession = Depends(get_session),
 ):
     try:
-        if user.role == "admin":
+        # Admins see all bookings ONLY when explicitly filtering by status
+        # (e.g., for the admin review queue). Otherwise they see their own.
+        if user.role == "admin" and status_filter is not None:
             return await session.run_sync(
                 lambda sync_session: _to_read_list(
                     get_all_bookings(cast(Session, sync_session), status_filter)
                 )
             )
+
+        # For everyone else (or admin with no status filter), only show personal bookings
         return await session.run_sync(
             lambda sync_session: _to_read_list(
-                get_user_bookings(user.id, cast(Session, sync_session))
+                get_user_bookings(user.id, cast(Session, sync_session), status_filter)
             )
         )
     except Exception as exc:

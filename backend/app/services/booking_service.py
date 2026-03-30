@@ -238,13 +238,18 @@ def get_pending_bookings(session: Session) -> list[Booking]:
     return list(session.exec(statement))
 
 
-def get_user_bookings(user_id, session: Session) -> list[Booking]:
+def get_user_bookings(
+    user_id, session: Session, status: str | BookingStatus | None = None
+) -> list[Booking]:
     statement = (
         select(Booking)
         .where(Booking.userID == user_id)
         .options(selectinload(Booking.timeSlots))
-        .order_by(Booking.createdAt.desc(), Booking.id.desc())
     )
+    if status is not None:
+        statement = statement.where(Booking.status == BookingStatus(status))
+
+    statement = statement.order_by(Booking.createdAt.desc(), Booking.id.desc())
     return list(session.exec(statement))
 
 
@@ -257,6 +262,7 @@ def get_all_bookings(
 
     statement = statement.order_by(Booking.createdAt.desc(), Booking.id.desc())
     return list(session.exec(statement))
+
 
 _ACTION_MAP: dict[str, tuple] = {
     "approve": (approve_booking, NotificationType.APPROVED),

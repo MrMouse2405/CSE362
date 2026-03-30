@@ -7,7 +7,7 @@ unread badge count, and marking a notification as read.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import cast
 from uuid import UUID
 
@@ -75,6 +75,30 @@ async def unread_count(
         lambda sync_session: get_unread_count(user.id, cast(Session, sync_session))
     )
     return UnreadCountRead(count=count)
+
+
+@router.get("/recent", response_model=list[NotificationRead])
+async def recent_notifications(
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """
+    Returns unread notifications created in the last 60 seconds.
+    Used for real-time toast notifications.
+    """
+    one_minute_ago = datetime.utcnow() - timedelta(seconds=60)
+
+    def _get_recent(sync_session: Session):
+        from sqlmodel import select
+
+        statement = select(Notification).where(
+            Notification.userID == user.id,
+            Notification.isRead.is_(False),
+            Notification.createdAt >= one_minute_ago,
+        )
+        return _to_notif_list(list(sync_session.exec(statement)))
+
+    return await session.run_sync(_get_recent)
 
 
 @router.patch("/{notification_id}/read", response_model=NotificationRead)
