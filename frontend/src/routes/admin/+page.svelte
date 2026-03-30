@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onMount } from "svelte";
     import { apiFetch } from "$lib/api";
     import { auth } from "$lib/state/auth.svelte";
     import * as Table from "$lib/components/ui/table";
@@ -50,6 +51,7 @@
     // ── State ────────────────────────────────────────────────────
     let pendingBookings = $state<Booking[]>([]);
     let users = $state<User[]>([]);
+    let roomsMap = $state<Record<number, string>>({});
     let loading = $state(true);
     let error = $state("");
     let successMessage = $state("");
@@ -85,8 +87,8 @@
     ];
 
     // ── Load Data ────────────────────────────────────────────────
-    async function loadData() {
-        loading = true;
+    async function loadData(quiet = false) {
+        if (!quiet) loading = true;
         error = "";
         try {
             const [bookings, allUsers] = await Promise.all([
@@ -95,12 +97,42 @@
             ]);
             pendingBookings = bookings;
             users = allUsers;
+
+            // Fetch room names for any rooms we don't know yet
+            const roomIds = [...new Set(bookings.map((b) => b.roomID))];
+            const unknownRoomIds = roomIds.filter((id) => !roomsMap[id]);
+
+            if (unknownRoomIds.length > 0) {
+                await Promise.all(
+                    unknownRoomIds.map(async (id) => {
+                        try {
+                            const room = await apiFetch<{
+                                id: number;
+                                name: string;
+                            }>(`/api/rooms/${id}`);
+                            roomsMap[id] = room.name;
+                        } catch {
+                            roomsMap[id] = `Room #${id}`;
+                        }
+                    }),
+                );
+            }
         } catch (e) {
             error = e instanceof Error ? e.message : "Failed to load data.";
         } finally {
-            loading = false;
+            if (!quiet) loading = false;
         }
     }
+
+    onMount(() => {
+        const interval = setInterval(() => {
+            if (auth.isAdmin) {
+                loadData(true);
+            }
+        }, 5000);
+
+        return () => clearInterval(interval);
+    });
 
     $effect(() => {
         if (!auth.isLoading && !auth.isAdmin) {
@@ -326,7 +358,8 @@
                                         </Badge>
                                     </Table.Cell>
                                     <Table.Cell
-                                        >Room #{booking.roomID}</Table.Cell
+                                        >{roomsMap[booking.roomID] ||
+                                            `Room #${booking.roomID}`}</Table.Cell
                                     >
                                     <Table.Cell>
                                         <div class="text-xs">
