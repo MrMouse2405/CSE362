@@ -25,12 +25,18 @@
     onMount(async () => {
         await Promise.all([fetchNotifications(), fetchUnreadCount()]);
         loading = false;
+
+        const interval = setInterval(async () => {
+            await Promise.all([fetchNotifications(), fetchUnreadCount()]);
+        }, 5000);
+
+        return () => clearInterval(interval);
     });
 
     async function fetchNotifications() {
         try {
             const data = await apiFetch<Notification[]>("/api/notifications");
-            //newest notification first 
+            //newest notification first
             notifications = data.sort(
                 (a, b) =>
                     new Date(b.createdAt).getTime() -
@@ -71,7 +77,6 @@
             unreadCount += 1;
         }
     }
-
 
     // specifies green/red/neutral for each notification
     function badgeClass(type: NotificationType): string {
@@ -141,14 +146,12 @@
                 </div>
             {/each}
         </div>
-
     {:else if error}
         <div
             class="text-muted-foreground flex flex-1 items-center justify-center text-sm"
         >
             {error}
         </div>
-
     {:else if notifications.length === 0}
         <div
             class="text-muted-foreground flex flex-1 items-center justify-center text-sm"
@@ -156,7 +159,6 @@
             No notifications yet. When your bookings are approved, denied, or
             cancelled, you'll see updates here.
         </div>
-
     {:else}
         <ul class="flex flex-col gap-3" aria-label="Notifications">
             {#each notifications as notification (notification.id)}
@@ -201,7 +203,9 @@
                                         <!-- Type badge: green=approved, red=denied, neutral=cancelled -->
                                         <Badge
                                             variant="outline"
-                                            class="shrink-0 text-xs uppercase tracking-wide {badgeClass(notification.type)}"
+                                            class="shrink-0 text-xs uppercase tracking-wide {badgeClass(
+                                                notification.type,
+                                            )}"
                                         >
                                             {typeLabel(notification.type)}
                                         </Badge>

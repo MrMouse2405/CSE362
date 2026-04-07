@@ -9,6 +9,7 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import Response
+from sqlmodel import select
 
 from app.models.user import User
 from app.schemas.user import AdminUserUpdate, UserCreate, UserRead
@@ -38,6 +39,21 @@ async def get_me(user: User = Depends(current_active_user)):
     return user
 
 
+@router.get("/users", response_model=list[UserRead])
+async def list_users(
+    admin_user: User = Depends(require_admin),
+    user_manager: UserManager = Depends(get_user_manager),
+):
+    """
+    Admin-only route to list all users.
+    """
+    del admin_user
+    session = user_manager.user_db.session  # type: ignore
+    statement = select(User)
+    results = await session.execute(statement)
+    return results.scalars().all()
+
+
 @router.patch("/users/{id}", response_model=UserRead)
 async def update_user_admin(
     id: uuid.UUID,
@@ -59,6 +75,43 @@ async def update_user_admin(
         )
 
     return target_user
+
+
+@router.delete("/users/{id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_user_admin(
+    id: uuid.UUID,
+    admin_user: User = Depends(require_admin),
+    user_manager: UserManager = Depends(get_user_manager),
+):
+    """
+    Admin-only route to delete a user.
+    """
+    del admin_user
+    user = await user_manager.get(id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
+
+    await user_manager.delete(user)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post("/users", response_model=UserRead, status_code=status.HTTP_201_CREATED)
+async def create_user_admin(
+    user_create: UserCreate,
+    admin_user: User = Depends(require_admin),
+    user_manager: UserManager = Depends(get_user_manager),
+):
+    """
+    Admin-only route to create a new user.
+    """
+    del admin_user
+    try:
+        user = await user_manager.create(user_create, safe=False)
+        return user
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.get("/avatar")
