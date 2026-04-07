@@ -1,6 +1,9 @@
 <script lang="ts">
     import "./layout.css";
     import { ModeWatcher } from "mode-watcher";
+    import { onMount } from "svelte";
+    import { Toaster, toast } from "svelte-sonner";
+    import { apiFetch } from "$lib/api";
     import { goto, beforeNavigate } from "$app/navigation";
     import { page } from "$app/state";
     import { auth } from "$lib/state/auth.svelte";
@@ -35,12 +38,44 @@
 
     const PAGE_NAMES: Record<string, string> = {
         "/": "Dashboard",
+        "/portal": "Booking Portal",
         "/account": "Account",
         "/bookings": "Bookings",
         "/notifications": "Notifications",
         "/admin": "Admin Panel",
         "/test": "Test",
     };
+
+    // Notification polling state
+    let displayedNotifications = new Set<number>();
+
+    onMount(() => {
+        const interval = setInterval(async () => {
+            if (!auth.isAuthenticated || auth.isLoading) return;
+
+            try {
+                const recent = await apiFetch<any[]>(
+                    "/api/notifications/recent",
+                );
+                for (const n of recent) {
+                    if (!displayedNotifications.has(n.id)) {
+                        toast(n.message, {
+                            description: new Date(n.createdAt).toLocaleString(),
+                            action: {
+                                label: "View",
+                                onClick: () => goto("/notifications"),
+                            },
+                        });
+                        displayedNotifications.add(n.id);
+                    }
+                }
+            } catch (err) {
+                // Silently ignore polling errors
+            }
+        }, 5000);
+
+        return () => clearInterval(interval);
+    });
 
     function pageName(pathname: string): string {
         if (pathname.startsWith("/book/")) return "Book Room";
@@ -85,13 +120,16 @@
             goto("/login");
         } else if (isGuestOnlyPath(currentPath) && auth.isAuthenticated) {
             goto("/");
-        } else if (currentPath.startsWith("/admin") && !auth.isAdmin) {
-            goto("/");
+        }
+
+        if (currentPath.startsWith("/admin") && !auth.isAdmin) {
+            goto("/portal");
         }
     });
 </script>
 
 <ModeWatcher />
+<Toaster position="top-right" closeButton richColors />
 <svelte:head></svelte:head>
 
 {#if auth.isLoading}
@@ -184,6 +222,14 @@
                     </Button>
                     <Separator class="my-1" />
                 {/if}
+                <Button
+                    variant="ghost"
+                    class="justify-start gap-2"
+                    onclick={() => mobileNav("/portal")}
+                >
+                    <CalendarCheck class="size-4" />
+                    Booking Portal
+                </Button>
                 <Button
                     variant="ghost"
                     class="justify-start gap-2"
